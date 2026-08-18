@@ -17,8 +17,8 @@ dev: ## Start both backend and frontend concurrently
 dev-backend: ## Start FastAPI dev server on :8000
 	cd $(BACKEND_DIR) && $(UVICORN) main:app --reload --port 8000
 
-dev-frontend: ## Start Next.js dev server on :3000
-	cd $(FRONTEND_DIR) && npm run dev
+dev-frontend: ## Start Next.js dev server on :3100
+	cd $(FRONTEND_DIR) && npm run dev -- --port 3100
 
 # ---------------------------------------------------------------------------
 # Install

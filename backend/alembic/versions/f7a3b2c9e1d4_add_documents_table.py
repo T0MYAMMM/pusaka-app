@@ -1,7 +1,7 @@
 """add documents table
 
 Revision ID: f7a3b2c9e1d4
-Revises: d5e1b9f3c2a8
+Revises: e6d0c3a7f9b2
 Create Date: 2026-03-09 00:00:00.000000
 """
 from alembic import op
@@ -9,7 +9,7 @@ import sqlalchemy as sa
 from sqlalchemy import inspect as sa_inspect
 
 revision = "f7a3b2c9e1d4"
-down_revision = "d5e1b9f3c2a8"
+down_revision = "e6d0c3a7f9b2"
 branch_labels = None
 depends_on = None
 

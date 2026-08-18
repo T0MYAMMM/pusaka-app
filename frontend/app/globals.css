@@ -1,0 +1,220 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-playfair);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-gold: var(--gold);
+  --color-teal: var(--teal);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+}
+
+/* ─── PUSAKA Light Mode ─────────────────────────────────────────── */
+:root {
+  --radius: 0.75rem;
+
+  /* Brand colors */
+  --gold:        #D4AF37;
+  --teal:        #006064;
+  --terracotta:  #BC6C25;
+
+  /* Surface */
+  --background:  #F9F7F2;
+  --foreground:  #1E293B;
+
+  /* Cards / Popovers */
+  --card:                 #FFFFFF;
+  --card-foreground:      #1E293B;
+  --popover:              #FFFFFF;
+  --popover-foreground:   #1E293B;
+
+  /* Primary — Heritage Indigo */
+  --primary:              #2C1E1A;
+  --primary-foreground:   #F9F7F2;
+
+  /* Secondary */
+  --secondary:            #EDE8DC;
+  --secondary-foreground: #2C1E1A;
+
+  /* Muted */
+  --muted:                #EDE8DC;
+  --muted-foreground:     #6B7280;
+
+  /* Accent — Keraton Gold tint */
+  --accent:               #FAF3DC;
+  --accent-foreground:    #2C1E1A;
+
+  /* Destructive — Terracotta */
+  --destructive:          #BC6C25;
+
+  /* Borders / Inputs */
+  --border:   #DDD7C8;
+  --input:    #DDD7C8;
+  --ring:     #D4AF37;
+
+  /* Chart palette */
+  --chart-1: #2C1E1A;
+  --chart-2: #006064;
+  --chart-3: #D4AF37;
+  --chart-4: #BC6C25;
+  --chart-5: #6B4C3B;
+
+  /* Sidebar — Heritage Indigo */
+  --sidebar:                   #2C1E1A;
+  --sidebar-foreground:        #F9F7F2;
+  --sidebar-primary:           #D4AF37;
+  --sidebar-primary-foreground:#2C1E1A;
+  --sidebar-accent:            #3D2B26;
+  --sidebar-accent-foreground: #F9F7F2;
+  --sidebar-border:            rgba(249,247,242,0.12);
+  --sidebar-ring:              #D4AF37;
+}
+
+/* ─── PUSAKA Dark Mode ──────────────────────────────────────────── */
+.dark {
+  /* Brand colors */
+  --gold:        #D4AF37;
+  --teal:        #4DB6BC;
+  --terracotta:  #E07B3A;
+
+  /* Surface */
+  --background:  #1A1209;
+  --foreground:  #F2EDD7;
+
+  /* Cards */
+  --card:                 #221610;
+  --card-foreground:      #F2EDD7;
+  --popover:              #221610;
+  --popover-foreground:   #F2EDD7;
+
+  /* Primary — Keraton Gold glows in dark */
+  --primary:              #D4AF37;
+  --primary-foreground:   #1A1209;
+
+  /* Secondary */
+  --secondary:            #2C1E1A;
+  --secondary-foreground: #F2EDD7;
+
+  /* Muted */
+  --muted:                #2C1E1A;
+  --muted-foreground:     #A89880;
+
+  /* Accent */
+  --accent:               #2C1E1A;
+  --accent-foreground:    #D4AF37;
+
+  /* Destructive */
+  --destructive:          #E07B3A;
+
+  /* Borders */
+  --border:   rgba(242,237,215,0.12);
+  --input:    rgba(242,237,215,0.15);
+  --ring:     #D4AF37;
+
+  /* Charts */
+  --chart-1: #D4AF37;
+  --chart-2: #4DB6BC;
+  --chart-3: #E07B3A;
+  --chart-4: #8B6B4A;
+  --chart-5: #F2EDD7;
+
+  /* Sidebar — deeper dark in dark mode */
+  --sidebar:                   #130D06;
+  --sidebar-foreground:        #F2EDD7;
+  --sidebar-primary:           #D4AF37;
+  --sidebar-primary-foreground:#130D06;
+  --sidebar-accent:            #1A1209;
+  --sidebar-accent-foreground: #F2EDD7;
+  --sidebar-border:            rgba(242,237,215,0.08);
+  --sidebar-ring:              #D4AF37;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* ─── Batik Parang Texture ──────────────────────────────────────── */
+.batik-texture {
+  position: relative;
+}
+
+.batik-texture::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    repeating-linear-gradient(
+      135deg,
+      transparent 0px,
+      transparent 6px,
+      rgba(212, 175, 55, 0.035) 6px,
+      rgba(212, 175, 55, 0.035) 7px
+    ),
+    repeating-linear-gradient(
+      45deg,
+      transparent 0px,
+      transparent 6px,
+      rgba(212, 175, 55, 0.02) 6px,
+      rgba(212, 175, 55, 0.02) 7px
+    );
+  background-size: 14px 14px;
+  border-radius: inherit;
+  z-index: 0;
+}
+
+.batik-texture > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ─── Playfair Display for headings ─────────────────────────────── */
+.font-serif {
+  font-family: var(--font-playfair), Georgia, serif;
+}
