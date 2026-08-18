@@ -1,0 +1,34 @@
+# --- Secrets: never commit. Only .env.example belongs in git. ---
+.env
+.env.*
+!.env.example
+
+# --- Local databases: contain real vault data ---
+*.db
+*.sqlite
+*.sqlite3
+
+# --- Python ---
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# --- Node / Next.js ---
+node_modules/
+.next/
+out/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# --- Misc ---
+.DS_Store
+*.log
+.vercel
+.idea/
+.vscode/
