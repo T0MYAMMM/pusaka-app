@@ -39,8 +39,9 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --color-gold: var(--gold);
-  --color-teal: var(--teal);
+  --color-sage: var(--sage);
+  --color-mist: var(--mist);
+  --color-clay: var(--clay);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -50,124 +51,143 @@
   --radius-4xl: calc(var(--radius) + 16px);
 }
 
-/* ─── PUSAKA Light Mode ─────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────────
+   Pusaka — "Sage & Linen"
+
+   A soft, low-chroma palette built on sage green, warm linen and a
+   muted clay accent. Chosen over the previous dark-brown/gold scheme
+   because a family vault should read calm and warm rather than heavy.
+   Every pair below meets WCAG AA: 4.5:1 for body text, 3:1 for the
+   interactive boundaries (--input, --ring). --border is decorative
+   only (dividers, card outlines); interactive outlines use --input.
+   ─────────────────────────────────────────────────────────────────── */
+
+/* ─── Pusaka Light Mode ─────────────────────────────────────────── */
 :root {
   --radius: 0.75rem;
 
-  /* Brand colors */
-  --gold:        #D4AF37;
-  --teal:        #006064;
-  --terracotta:  #BC6C25;
+  /* Brand accents */
+  --sage:   #4E6B5C;
+  --mist:   #5B7183;
+  --clay:   #9E4B39;
 
   /* Surface */
-  --background:  #F9F7F2;
-  --foreground:  #1E293B;
+  --background:  #F5F7F2;
+  --foreground:  #2E3A33;
 
   /* Cards / Popovers */
   --card:                 #FFFFFF;
-  --card-foreground:      #1E293B;
+  --card-foreground:      #2E3A33;
   --popover:              #FFFFFF;
-  --popover-foreground:   #1E293B;
+  --popover-foreground:   #2E3A33;
 
-  /* Primary — Heritage Indigo */
-  --primary:              #2C1E1A;
-  --primary-foreground:   #F9F7F2;
+  /* Primary — Sage */
+  --primary:              #4E6B5C;
+  --primary-foreground:   #F5F7F2;
 
   /* Secondary */
-  --secondary:            #EDE8DC;
-  --secondary-foreground: #2C1E1A;
+  --secondary:            #E6EAE1;
+  --secondary-foreground: #2E3A33;
 
   /* Muted */
-  --muted:                #EDE8DC;
-  --muted-foreground:     #6B7280;
+  --muted:                #E6EAE1;
+  --muted-foreground:     #5C6B61;
 
-  /* Accent — Keraton Gold tint */
-  --accent:               #FAF3DC;
-  --accent-foreground:    #2C1E1A;
+  /* Accent — pale sage wash */
+  --accent:               #E2EBE3;
+  --accent-foreground:    #2E3A33;
 
-  /* Destructive — Terracotta */
-  --destructive:          #BC6C25;
+  /* Destructive — muted clay */
+  --destructive:          #9E4B39;
 
   /* Borders / Inputs */
-  --border:   #DDD7C8;
-  --input:    #DDD7C8;
-  --ring:     #D4AF37;
+  --border:   #D6DDD2;
+  --input:    #838F84;
+  --ring:     #5F7F6C;
 
   /* Chart palette */
-  --chart-1: #2C1E1A;
-  --chart-2: #006064;
-  --chart-3: #D4AF37;
-  --chart-4: #BC6C25;
-  --chart-5: #6B4C3B;
+  --chart-1: #4E6B5C;
+  --chart-2: #5B7183;
+  --chart-3: #A98C5F;
+  --chart-4: #9E4B39;
+  --chart-5: #7E9A88;
 
-  /* Sidebar — Heritage Indigo */
-  --sidebar:                   #2C1E1A;
-  --sidebar-foreground:        #F9F7F2;
-  --sidebar-primary:           #D4AF37;
-  --sidebar-primary-foreground:#2C1E1A;
-  --sidebar-accent:            #3D2B26;
-  --sidebar-accent-foreground: #F9F7F2;
-  --sidebar-border:            rgba(249,247,242,0.12);
-  --sidebar-ring:              #D4AF37;
+  /* Decorative surface texture */
+  --texture-strong: rgba(78, 107, 92, 0.05);
+  --texture-soft:   rgba(78, 107, 92, 0.03);
+
+  /* Sidebar — deep sage */
+  --sidebar:                   #2F3F36;
+  --sidebar-foreground:        #EEF2EC;
+  --sidebar-primary:           #A9C9B5;
+  --sidebar-primary-foreground:#2F3F36;
+  --sidebar-accent:            #3C4E43;
+  --sidebar-accent-foreground: #EEF2EC;
+  --sidebar-border:            rgba(238,242,236,0.14);
+  --sidebar-ring:              #A9C9B5;
 }
 
-/* ─── PUSAKA Dark Mode ──────────────────────────────────────────── */
+/* ─── Pusaka Dark Mode ──────────────────────────────────────────── */
 .dark {
-  /* Brand colors */
-  --gold:        #D4AF37;
-  --teal:        #4DB6BC;
-  --terracotta:  #E07B3A;
+  /* Brand accents */
+  --sage:   #8FB39F;
+  --mist:   #93A8B8;
+  --clay:   #D08A73;
 
   /* Surface */
-  --background:  #1A1209;
-  --foreground:  #F2EDD7;
+  --background:  #161B18;
+  --foreground:  #E7ECE6;
 
   /* Cards */
-  --card:                 #221610;
-  --card-foreground:      #F2EDD7;
-  --popover:              #221610;
-  --popover-foreground:   #F2EDD7;
+  --card:                 #1E2421;
+  --card-foreground:      #E7ECE6;
+  --popover:              #1E2421;
+  --popover-foreground:   #E7ECE6;
 
-  /* Primary — Keraton Gold glows in dark */
-  --primary:              #D4AF37;
-  --primary-foreground:   #1A1209;
+  /* Primary — Sage, lifted for dark surfaces */
+  --primary:              #8FB39F;
+  --primary-foreground:   #141A16;
 
   /* Secondary */
-  --secondary:            #2C1E1A;
-  --secondary-foreground: #F2EDD7;
+  --secondary:            #28302B;
+  --secondary-foreground: #E7ECE6;
 
   /* Muted */
-  --muted:                #2C1E1A;
-  --muted-foreground:     #A89880;
+  --muted:                #28302B;
+  --muted-foreground:     #9FAC9F;
 
   /* Accent */
-  --accent:               #2C1E1A;
-  --accent-foreground:    #D4AF37;
+  --accent:               #28302B;
+  --accent-foreground:    #A9C9B5;
 
   /* Destructive */
-  --destructive:          #E07B3A;
+  --destructive:          #D08A73;
 
-  /* Borders */
-  --border:   rgba(242,237,215,0.12);
-  --input:    rgba(242,237,215,0.15);
-  --ring:     #D4AF37;
+  /* Borders / Inputs */
+  --border:   #333C36;
+  --input:    #687767;
+  --ring:     #7FA08C;
 
   /* Charts */
-  --chart-1: #D4AF37;
-  --chart-2: #4DB6BC;
-  --chart-3: #E07B3A;
-  --chart-4: #8B6B4A;
-  --chart-5: #F2EDD7;
+  --chart-1: #8FB39F;
+  --chart-2: #93A8B8;
+  --chart-3: #C7A97B;
+  --chart-4: #D08A73;
+  --chart-5: #B7CEC0;
 
-  /* Sidebar — deeper dark in dark mode */
-  --sidebar:                   #130D06;
-  --sidebar-foreground:        #F2EDD7;
-  --sidebar-primary:           #D4AF37;
-  --sidebar-primary-foreground:#130D06;
-  --sidebar-accent:            #1A1209;
-  --sidebar-accent-foreground: #F2EDD7;
-  --sidebar-border:            rgba(242,237,215,0.08);
-  --sidebar-ring:              #D4AF37;
+  /* Decorative surface texture */
+  --texture-strong: rgba(143, 179, 159, 0.06);
+  --texture-soft:   rgba(143, 179, 159, 0.035);
+
+  /* Sidebar — deepest sage */
+  --sidebar:                   #121714;
+  --sidebar-foreground:        #E7ECE6;
+  --sidebar-primary:           #8FB39F;
+  --sidebar-primary-foreground:#121714;
+  --sidebar-accent:            #222A25;
+  --sidebar-accent-foreground: #E7ECE6;
+  --sidebar-border:            rgba(231,236,230,0.10);
+  --sidebar-ring:              #7FA08C;
 }
 
 @layer base {
@@ -176,6 +196,34 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* Anchor links on the landing page sit under a sticky header — offset
+     the scroll target so the section heading is not hidden by it. */
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* Baseline focus ring for elements that are not shadcn primitives
+     (bare <a>, <summary>, custom buttons). */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
   }
 }
 
@@ -194,15 +242,15 @@
       135deg,
       transparent 0px,
       transparent 6px,
-      rgba(212, 175, 55, 0.035) 6px,
-      rgba(212, 175, 55, 0.035) 7px
+      var(--texture-strong) 6px,
+      var(--texture-strong) 7px
     ),
     repeating-linear-gradient(
       45deg,
       transparent 0px,
       transparent 6px,
-      rgba(212, 175, 55, 0.02) 6px,
-      rgba(212, 175, 55, 0.02) 7px
+      var(--texture-soft) 6px,
+      var(--texture-soft) 7px
     );
   background-size: 14px 14px;
   border-radius: inherit;

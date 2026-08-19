@@ -2,27 +2,27 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
       {/* Left brand panel */}
-      <div className="hidden flex-col justify-between p-10 text-white lg:flex" style={{ background: '#2C1E1A' }}>
+      <div className="hidden flex-col justify-between bg-sidebar p-10 text-sidebar-foreground lg:flex">
         <div>
-          <span className="font-serif text-2xl font-bold tracking-wide" style={{ color: '#D4AF37', fontFamily: 'Georgia, serif' }}>
-            PUSAKA
+          <span className="font-serif text-2xl font-bold tracking-wide text-sidebar-primary">
+            Pusaka
           </span>
         </div>
         <blockquote className="space-y-2">
-          <p className="text-lg leading-relaxed" style={{ color: '#F9F7F2CC' }}>
-            "Simpan dengan Tenang. Jaga dengan Bangga."
+          <p className="text-lg leading-relaxed text-sidebar-foreground">
+            &ldquo;Simpan dengan Tenang. Jaga dengan Bangga.&rdquo;
           </p>
-          <footer className="text-sm" style={{ color: '#D4AF3799' }}>
+          <footer className="text-sm text-sidebar-foreground/75">
             — Store with Peace. Guard with Pride.
           </footer>
         </blockquote>
-        <p className="text-xs" style={{ color: '#D4AF3766' }}>
+        <p className="text-xs text-sidebar-foreground/75">
           Brankas Digital Keluarga Indonesia
         </p>
       </div>
 
       {/* Right form panel */}
-      <div className="flex items-center justify-center p-8">
+      <div className="flex items-center justify-center px-6 py-10 sm:px-8">
         <div className="w-full max-w-sm">{children}</div>
       </div>
     </div>
