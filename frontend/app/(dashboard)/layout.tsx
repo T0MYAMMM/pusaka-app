@@ -19,9 +19,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <EmailVerificationBanner />
 
           {/* Mobile header */}
-          <header className="flex items-center gap-3 border-b bg-background px-4 py-3 lg:hidden">
+          <header className="flex items-center gap-3 border-b bg-background px-4 py-2.5 lg:hidden">
             <MobileNav />
-            <span className="font-serif font-bold text-lg tracking-wide text-primary">PUSAKA</span>
+            <span className="font-serif font-bold text-lg tracking-wide text-primary">Pusaka</span>
           </header>
 
           {/* Topbar — language + theme, always visible */}

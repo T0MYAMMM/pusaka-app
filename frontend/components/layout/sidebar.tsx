@@ -31,7 +31,8 @@ function NavItem({
   const isActive = exact ? pathname === href : pathname.startsWith(href)
 
   const linkClass = cn(
-    'flex items-center rounded-md py-2 text-sm font-medium transition-colors',
+    'flex min-h-10 items-center rounded-md py-2 text-sm font-medium transition-colors',
+    'outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar',
     collapsed ? 'justify-center px-2' : 'gap-3 px-3',
     isActive
       ? 'bg-sidebar-accent text-sidebar-accent-foreground'
@@ -104,7 +105,7 @@ export function Sidebar({ onNavigate }: SidebarProps = {}) {
         {!collapsed && (
           <div className="flex items-center gap-2 min-w-0">
             <span className="font-serif font-bold text-xl tracking-wide text-sidebar-primary leading-none">
-              PUSAKA
+              Pusaka
             </span>
           </div>
         )}
@@ -113,7 +114,7 @@ export function Sidebar({ onNavigate }: SidebarProps = {}) {
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 shrink-0 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/60"
+              className="h-8 w-8 shrink-0 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60"
               onClick={toggle}
             >
               {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
@@ -134,7 +135,7 @@ export function Sidebar({ onNavigate }: SidebarProps = {}) {
         ))}
 
         {!collapsed && (
-          <p className="mt-4 mb-1 px-3 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40">
+          <p className="mt-4 mb-1 px-3 text-[11px] font-semibold uppercase tracking-widest text-sidebar-foreground/70">
             Team
           </p>
         )}
@@ -172,10 +173,10 @@ export function Sidebar({ onNavigate }: SidebarProps = {}) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/60"
+                  className="h-8 w-8 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60"
                   onClick={handleLogout}
                 >
-                  <LogOut className="h-3.5 w-3.5" />
+                  <LogOut className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right">Sign out</TooltipContent>
@@ -195,7 +196,7 @@ export function Sidebar({ onNavigate }: SidebarProps = {}) {
                 <p className="truncate text-sm font-medium text-sidebar-foreground">
                   {user?.first_name} {user?.last_name}
                 </p>
-                <p className="truncate text-xs text-sidebar-foreground/50">@{user?.username}</p>
+                <p className="truncate text-xs text-sidebar-foreground/70">@{user?.username}</p>
               </div>
             </Link>
             <Button
@@ -203,7 +204,7 @@ export function Sidebar({ onNavigate }: SidebarProps = {}) {
               size="icon"
               onClick={handleLogout}
               title="Sign out"
-              className="shrink-0 h-8 w-8 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/60"
+              className="shrink-0 h-9 w-9 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60"
             >
               <LogOut className="h-4 w-4" />
             </Button>

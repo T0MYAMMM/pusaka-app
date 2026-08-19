@@ -60,7 +60,7 @@ export default function LoginPage() {
     <div className="space-y-6">
       <div className="space-y-2">
         <div className="flex items-center gap-2 lg:hidden">
-          <span className="font-serif text-lg font-bold tracking-wide text-primary" style={{ fontFamily: 'Georgia, serif' }}>PUSAKA</span>
+          <span className="font-serif text-lg font-bold tracking-wide text-primary">Pusaka</span>
         </div>
         <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
         <p className="text-sm text-muted-foreground">Enter your credentials to access your vault</p>
@@ -90,7 +90,7 @@ export default function LoginPage() {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Password</Label>
-            <Link href="/forgot-password" className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground">
+            <Link href="/forgot-password" className="inline-flex min-h-6 items-center rounded-sm text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground">
               Forgot password?
             </Link>
           </div>
