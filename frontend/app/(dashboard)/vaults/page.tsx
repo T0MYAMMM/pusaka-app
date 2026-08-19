@@ -113,7 +113,7 @@ export default function VaultsPage() {
   })
 
   if (isLoading) {
-    return <div className="p-8 text-sm text-muted-foreground">Loading…</div>
+    return <div className="p-4 sm:p-6 text-sm text-muted-foreground">Loading…</div>
   }
 
   return (

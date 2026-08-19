@@ -248,7 +248,7 @@ function SharedNoteRow({
 
 export default function VaultDetailPage({ params }: { params: Promise<{ id: string }> }) {
   return (
-    <Suspense fallback={<div className="p-8 text-sm text-muted-foreground">Loading…</div>}>
+    <Suspense fallback={<div className="p-4 sm:p-6 text-sm text-muted-foreground">Loading…</div>}>
       <VaultDetailContent params={params} />
     </Suspense>
   )

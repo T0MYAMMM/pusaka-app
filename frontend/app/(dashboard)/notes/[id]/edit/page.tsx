@@ -34,7 +34,7 @@ export default function EditNotePage({ params }: { params: Promise<{ id: string 
   })
 
   if (isLoading) return <div className="space-y-4 p-6"><Skeleton className="h-8 w-48" /><Skeleton className="h-96" /></div>
-  if (!data) return <div className="p-6 text-muted-foreground">Note not found.</div>
+  if (!data) return <div className="p-4 sm:p-6 text-sm text-muted-foreground">Note not found.</div>
 
   return (
     <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-6">
