@@ -47,7 +47,7 @@ export default function CredentialDetailPage({ params }: { params: Promise<{ id:
     </div>
   )
 
-  if (!data) return <div className="p-6 text-muted-foreground">Credential not found.</div>
+  if (!data) return <div className="p-4 sm:p-6 text-sm text-muted-foreground">Credential not found.</div>
 
   return (
     <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-6">
