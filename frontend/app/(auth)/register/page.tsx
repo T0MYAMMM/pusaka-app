@@ -44,7 +44,7 @@ export default function RegisterPage() {
     <div className="space-y-6">
       <div className="space-y-2">
         <div className="flex items-center gap-2 lg:hidden">
-          <span className="font-serif text-lg font-bold tracking-wide text-primary" style={{ fontFamily: 'Georgia, serif' }}>PUSAKA</span>
+          <span className="font-serif text-lg font-bold tracking-wide text-primary">Pusaka</span>
         </div>
         <h1 className="text-2xl font-bold tracking-tight">Create your account</h1>
         <p className="text-sm text-muted-foreground">Start managing your credentials securely</p>

@@ -100,9 +100,10 @@ const translations = {
       recentActivity: 'Recent activity',
     },
     brand: {
+      name: 'Pusaka',
       tagline: 'Store with Peace. Guard with Pride.',
-      brankas: 'PUSAKA Brankas',
-      waris: 'PUSAKA Waris',
+      brankas: 'Pusaka Brankas',
+      waris: 'Pusaka Waris',
     },
   },
   id: {
@@ -200,9 +201,10 @@ const translations = {
       recentActivity: 'Aktivitas terkini',
     },
     brand: {
+      name: 'Pusaka',
       tagline: 'Simpan dengan Tenang. Jaga dengan Bangga.',
-      brankas: 'PUSAKA Brankas',
-      waris: 'PUSAKA Waris',
+      brankas: 'Pusaka Brankas',
+      waris: 'Pusaka Waris',
     },
   },
 } as const
