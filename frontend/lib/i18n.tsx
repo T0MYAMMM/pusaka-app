@@ -207,7 +207,17 @@ const translations = {
   },
 } as const
 
-export type Translations = typeof translations.en
+/**
+ * `translations` is `as const`, so every leaf infers as a string literal —
+ * making the English dictionary's type ("Dashboard") structurally incompatible
+ * with the Indonesian one ("Dasbor"). Widening the leaves to `string` lets both
+ * satisfy one shared shape while keeping the key structure checked.
+ */
+type Widen<T> = T extends string
+  ? string
+  : { [K in keyof T]: Widen<T[K]> }
+
+export type Translations = Widen<typeof translations.en>
 
 interface I18nContextValue {
   lang: Lang
