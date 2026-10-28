@@ -91,3 +91,42 @@
   The return value is not used, so `void` is accurate. Wrap the ternary in `async () => { await ... }`
   to produce `Promise<void>`.
 **Files changed:** `frontend/components/features/favorite-button.tsx`
+
+
+---
+
+## [Phase 8.4] Hydration mismatch from localStorage-backed preferences
+
+**Date:** 2026-10-28
+**Symptom:** Sidebar collapse state and language read `localStorage` inside a `useState`
+  initializer, so the first client render differed from the server render. Moving the read
+  into `useEffect` + `setState` then failed lint (`react-hooks/set-state-in-effect`).
+**Root cause:** Server has no `localStorage`; React 19's lint rules forbid syncing external
+  state through effects.
+**Fix:** `lib/local-store.ts` — `useLocalPreference()` built on `useSyncExternalStore` with the
+  fallback as the server snapshot. Same approach for the time-of-day greeting in `lib/hooks.ts`.
+**Files changed:** `frontend/lib/local-store.ts`, `frontend/lib/i18n.tsx`,
+  `frontend/components/layout/sidebar-context.tsx`, `frontend/lib/hooks.ts`
+
+---
+
+## [Phase 8.9] Destructive confirm button rendered indigo
+
+**Date:** 2026-10-28
+**Symptom:** "Delete" in `DeleteDialog` showed the primary (indigo) colour.
+**Root cause:** `AlertDialogAction` / `AlertDialogCancel` passed `className` to the inner Radix
+  element; Slot concatenates class strings without `tailwind-merge`, so `bg-primary` from the
+  Button variant won over `bg-destructive`.
+**Fix:** Pass `className` to `Button` (merged with `cn`) and use `variant="destructive"`.
+**Files changed:** `frontend/components/ui/alert-dialog.tsx`, `frontend/components/features/delete-dialog.tsx`
+
+---
+
+## [Phase 8.5] Chart palette failed the colour-vision check
+
+**Date:** 2026-10-28
+**Symptom:** A five-hue categorical palette for "credentials by type" failed the dataviz
+  validator (jade vs rose ΔE 2.0 under deuteranopia).
+**Fix:** The job is comparing amounts, so the chart became a single-hue bar list with direct
+  labels; `--chart-1` set to validated `#4553B8` / `#7D8AF0`.
+**Files changed:** `frontend/app/globals.css`, `frontend/app/(dashboard)/dashboard/page.tsx`

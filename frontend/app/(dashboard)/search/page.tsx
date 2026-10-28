@@ -93,7 +93,7 @@ function Results({ q }: { q: string }) {
           <>
             {t.shell.typeToSearch}
             <span className="mt-2 flex items-center justify-center gap-1.5">
-              From any page, press <Kbd>⌘</Kbd><Kbd>K</Kbd> or <Kbd>Ctrl</Kbd><Kbd>K</Kbd>.
+              From any page, press <Kbd>⌘</Kbd><Kbd>K</Kbd> or <Kbd>Ctrl</Kbd><Kbd>K</Kbd>
             </span>
           </>
         }

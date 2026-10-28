@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { User, Lock, Shield, Eye, CreditCard, Building2 } from 'lucide-react'
@@ -10,6 +11,13 @@ import { useT } from '@/lib/i18n'
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const { t } = useT()
+  const pillsRef = useRef<HTMLUListElement>(null)
+
+  // Bring the current page's pill into view in the scrolling mobile row.
+  useEffect(() => {
+    const active = pillsRef.current?.querySelector<HTMLElement>('[aria-current="page"]')
+    active?.scrollIntoView({ block: 'nearest', inline: 'center' })
+  }, [pathname])
 
   const nav = [
     { href: '/settings/general', label: t.settings.general, icon: User },
@@ -27,7 +35,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
       <div className="lg:grid lg:grid-cols-[13rem_1fr] lg:items-start lg:gap-8">
         {/* Mobile: a horizontally scrolling row of pills */}
         <nav aria-label={t.settings.title} className="mb-5 lg:hidden">
-          <ul className="scrollbar-none -mx-4 flex gap-1.5 overflow-x-auto px-4 sm:-mx-6 sm:px-6">
+          <ul ref={pillsRef} className="scrollbar-none -mx-4 flex gap-1.5 overflow-x-auto px-4 sm:-mx-6 sm:px-6">
             {nav.map(({ href, label, icon: Icon }) => {
               const active = pathname.startsWith(href)
               return (
