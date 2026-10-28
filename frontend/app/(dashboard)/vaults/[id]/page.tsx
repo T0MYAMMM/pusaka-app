@@ -1,39 +1,62 @@
 'use client'
 
-import { use, useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useSearchParams } from 'next/navigation'
-import { Suspense } from 'react'
-import { toast } from 'sonner'
-import { Key, FileText, Plus, Trash2, Eye, EyeOff, ChevronLeft } from 'lucide-react'
+import { use } from 'react'
 import Link from 'next/link'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import { KeyRound, StickyNote, Vault } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
-import { orgsApi, credentialsApi, notesApi, type SharedCredential, type SharedNote } from '@/lib/api'
+import { Skeleton } from '@/components/ui/skeleton'
+import { PageContainer, PageHeader, Panel } from '@/components/shared/page'
+import { ItemTile } from '@/components/shared/item-tile'
+import { EmptyState } from '@/components/shared/empty-state'
+import { MetaList } from '@/components/shared/kbd'
+import { SharedCredentialRow, SharedNoteRow, VaultAddSelect } from '@/components/features/vault-items'
+import { orgsApi, credentialsApi, notesApi } from '@/lib/api'
+import { credentialMeta, noteMeta } from '@/lib/item-meta'
+import { formatDate } from '@/lib/utils'
+import { useT } from '@/lib/i18n'
 
-// The page receives the param as "orgId-vaultId" e.g. "1-3"
-function VaultDetailContent({ params }: { params: Promise<{ id: string }> }) {
+function RowsSkeleton({ rows = 2 }: { rows?: number }) {
+  return (
+    <ul className="divide-y" aria-busy="true" aria-label="Loading">
+      {Array.from({ length: rows }).map((_, i) => (
+        <li key={i} className="flex items-center gap-4 px-5 py-3">
+          <Skeleton className="size-10 rounded-lg" />
+          <div className="flex-1 space-y-2"><Skeleton className="h-3.5 w-40" /><Skeleton className="h-3 w-28" /></div>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+// The route param is "orgId-vaultId", e.g. "1-3".
+export default function VaultDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const [orgId, vaultId] = id.split('-').map(Number)
+  const valid = !isNaN(orgId) && !isNaN(vaultId)
   const qc = useQueryClient()
+  const { t, lang } = useT()
 
   const { data: vault, isLoading: vaultLoading } = useQuery({
     queryKey: ['vault', orgId, vaultId],
     queryFn: () => orgsApi.getVault(orgId, vaultId),
-    enabled: !isNaN(orgId) && !isNaN(vaultId),
+    enabled: valid,
   })
 
-  const { data: sharedCreds = [] } = useQuery({
+  const { data: orgs = [] } = useQuery({ queryKey: ['orgs'], queryFn: orgsApi.list })
+  const org = orgs.find((o) => o.id === orgId)
+
+  const { data: sharedCreds = [], isLoading: credsLoading } = useQuery({
     queryKey: ['shared-creds', orgId, vaultId],
     queryFn: () => orgsApi.listSharedCredentials(orgId, vaultId),
-    enabled: !isNaN(orgId) && !isNaN(vaultId),
+    enabled: valid,
   })
 
-  const { data: sharedNotes = [] } = useQuery({
+  const { data: sharedNotes = [], isLoading: notesLoading } = useQuery({
     queryKey: ['shared-notes', orgId, vaultId],
     queryFn: () => orgsApi.listSharedNotes(orgId, vaultId),
-    enabled: !isNaN(orgId) && !isNaN(vaultId),
+    enabled: valid,
   })
 
   const { data: myCreds = { items: [] } } = useQuery({
@@ -52,7 +75,7 @@ function VaultDetailContent({ params }: { params: Promise<{ id: string }> }) {
       toast.success('Credential added to vault')
       qc.invalidateQueries({ queryKey: ['shared-creds', orgId, vaultId] })
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed to add credential'),
+    onError: (err) => toast.error(err instanceof Error ? err.message : 'Could not add the credential. Try again in a moment.'),
   })
 
   const removeCred = useMutation({
@@ -61,7 +84,7 @@ function VaultDetailContent({ params }: { params: Promise<{ id: string }> }) {
       toast.success('Removed from vault')
       qc.invalidateQueries({ queryKey: ['shared-creds', orgId, vaultId] })
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed to remove'),
+    onError: (err) => toast.error(err instanceof Error ? err.message : 'Could not remove it. Try again in a moment.'),
   })
 
   const addNote = useMutation({
@@ -70,7 +93,7 @@ function VaultDetailContent({ params }: { params: Promise<{ id: string }> }) {
       toast.success('Note added to vault')
       qc.invalidateQueries({ queryKey: ['shared-notes', orgId, vaultId] })
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed to add note'),
+    onError: (err) => toast.error(err instanceof Error ? err.message : 'Could not add the note. Try again in a moment.'),
   })
 
   const removeNote = useMutation({
@@ -79,177 +102,140 @@ function VaultDetailContent({ params }: { params: Promise<{ id: string }> }) {
       toast.success('Removed from vault')
       qc.invalidateQueries({ queryKey: ['shared-notes', orgId, vaultId] })
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed to remove'),
+    onError: (err) => toast.error(err instanceof Error ? err.message : 'Could not remove it. Try again in a moment.'),
   })
 
   const sharedCredIds = new Set(sharedCreds.map((sc) => sc.credential_id).filter(Boolean))
   const sharedNoteIds = new Set(sharedNotes.map((sn) => sn.note_id).filter(Boolean))
 
-  const availableCreds = myCreds.items.filter((c) => !sharedCredIds.has(c.id))
-  const availableNotes = myNotes.items.filter((n) => !sharedNoteIds.has(n.id))
+  const availableCreds = myCreds.items
+    .filter((c) => !sharedCredIds.has(c.id))
+    .map((c) => ({ id: c.id, name: c.label, meta: credentialMeta(c.type) }))
+  const availableNotes = myNotes.items
+    .filter((n) => !sharedNoteIds.has(n.id))
+    .map((n) => ({ id: n.id, name: n.title, meta: noteMeta(n.type) }))
 
-  if (vaultLoading) return <div className="p-4 sm:p-6 text-sm text-muted-foreground">Loading…</div>
-  if (!vault) return <div className="p-4 sm:p-6 text-sm text-destructive">Vault not found</div>
-
-  return (
-    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-8">
-      <div className="flex items-center gap-3">
-        <Link href="/vaults" className="text-muted-foreground hover:text-foreground">
-          <ChevronLeft className="h-4 w-4" />
-        </Link>
-        <div>
-          <h1 className="text-xl font-bold">{vault.name}</h1>
-          {vault.description && <p className="text-sm text-muted-foreground">{vault.description}</p>}
+  if (valid && vaultLoading) {
+    return (
+      <PageContainer className="space-y-6">
+        <Skeleton className="h-5 w-28" />
+        <div className="flex items-center gap-4">
+          <Skeleton className="size-14 rounded-xl" />
+          <div className="space-y-2"><Skeleton className="h-8 w-56" /><Skeleton className="h-4 w-40" /></div>
         </div>
-      </div>
-
-      {/* Shared Credentials */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="flex items-center gap-2 font-semibold">
-            <Key className="h-4 w-4" /> Credentials
-            <Badge variant="secondary">{sharedCreds.length}</Badge>
-          </h2>
-          {availableCreds.length > 0 && (
-            <select
-              className="h-8 rounded-md border bg-background px-2 text-sm"
-              onChange={(e) => { if (e.target.value) { addCred.mutate(Number(e.target.value)); e.target.value = '' } }}
-              defaultValue=""
-            >
-              <option value="" disabled>+ Add credential</option>
-              {availableCreds.map((c) => (
-                <option key={c.id} value={c.id}>{c.label}</option>
-              ))}
-            </select>
-          )}
+        <div className="grid gap-5 lg:grid-cols-[1fr_18rem]">
+          <Skeleton className="h-64 rounded-xl" />
+          <Skeleton className="h-48 rounded-xl" />
         </div>
+      </PageContainer>
+    )
+  }
 
-        {sharedCreds.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No credentials in this vault yet.</p>
-        ) : (
-          <div className="divide-y rounded-md border">
-            {sharedCreds.map((sc) => (
-              <SharedCredRow key={sc.id} sc={sc} orgId={orgId} vaultId={vaultId} onRemove={() => removeCred.mutate(sc.id)} />
-            ))}
-          </div>
-        )}
-      </section>
-
-      <Separator />
-
-      {/* Shared Notes */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="flex items-center gap-2 font-semibold">
-            <FileText className="h-4 w-4" /> Notes
-            <Badge variant="secondary">{sharedNotes.length}</Badge>
-          </h2>
-          {availableNotes.length > 0 && (
-            <select
-              className="h-8 rounded-md border bg-background px-2 text-sm"
-              onChange={(e) => { if (e.target.value) { addNote.mutate(Number(e.target.value)); e.target.value = '' } }}
-              defaultValue=""
-            >
-              <option value="" disabled>+ Add note</option>
-              {availableNotes.map((n) => (
-                <option key={n.id} value={n.id}>{n.title}</option>
-              ))}
-            </select>
-          )}
-        </div>
-
-        {sharedNotes.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No notes in this vault yet.</p>
-        ) : (
-          <div className="divide-y rounded-md border">
-            {sharedNotes.map((sn) => (
-              <SharedNoteRow key={sn.id} sn={sn} orgId={orgId} vaultId={vaultId} onRemove={() => removeNote.mutate(sn.id)} />
-            ))}
-          </div>
-        )}
-      </section>
-    </div>
-  )
-}
-
-function SharedCredRow({
-  sc, orgId, vaultId, onRemove,
-}: { sc: SharedCredential; orgId: number; vaultId: number; onRemove: () => void }) {
-  const [revealed, setRevealed] = useState(false)
-  const [password, setPassword] = useState<string | null>(null)
-
-  const reveal = async () => {
-    if (revealed) { setRevealed(false); return }
-    try {
-      const detail = await orgsApi.getSharedCredential(orgId, vaultId, sc.id)
-      setPassword(detail.password)
-      setRevealed(true)
-    } catch {
-      toast.error('Failed to decrypt password')
-    }
+  if (!vault) {
+    return (
+      <PageContainer>
+        <EmptyState
+          icon={Vault}
+          title="This vault doesn’t exist"
+          description="It may have been deleted, or you are no longer a member. Ask the organization owner if you need access."
+          action={<Button asChild variant="outline"><Link href="/vaults">Back to shared vaults</Link></Button>}
+        />
+      </PageContainer>
+    )
   }
 
   return (
-    <div className="flex items-center justify-between px-3 py-2.5 gap-3">
-      <div className="min-w-0 flex-1">
-        <p className="font-medium text-sm">{sc.label}</p>
-        <p className="text-xs text-muted-foreground">{sc.username ?? sc.email ?? sc.website_url ?? sc.type}</p>
-        {revealed && password !== null && (
-          <p className="font-mono text-xs mt-0.5 text-foreground/80 break-all">{password}</p>
-        )}
-      </div>
-      <div className="flex items-center gap-1 shrink-0">
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={reveal} title={revealed ? 'Hide' : 'Reveal password'}>
-          {revealed ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-        </Button>
-        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={onRemove}>
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
-      </div>
-    </div>
-  )
-}
+    <PageContainer>
+      <PageHeader
+        back={{ href: '/vaults', label: t.nav.vaults }}
+        leading={<ItemTile icon={Vault} tone="indigo" size="lg" />}
+        title={vault.name}
+        description={vault.description || (org ? `Shared in ${org.name}` : undefined)}
+      />
 
-function SharedNoteRow({
-  sn, orgId, vaultId, onRemove,
-}: { sn: SharedNote; orgId: number; vaultId: number; onRemove: () => void }) {
-  const [expanded, setExpanded] = useState(false)
-  const [content, setContent] = useState<string | null>(null)
+      <div className="grid items-start gap-5 lg:grid-cols-[1fr_18rem]">
+        <div className="min-w-0 space-y-5">
+          <Panel
+            title={<>Credentials <span className="ml-1 font-normal text-muted-foreground tabular">{sharedCreds.length}</span></>}
+            action={
+              <VaultAddSelect label="Add credential" items={availableCreds} onAdd={(cid) => addCred.mutate(cid)} isPending={addCred.isPending} />
+            }
+            bodyClassName="p-0"
+          >
+            {credsLoading ? (
+              <RowsSkeleton />
+            ) : sharedCreds.length === 0 ? (
+              <EmptyState
+                compact
+                icon={KeyRound}
+                title="No credentials shared yet"
+                description="Pick one of yours with “Add credential”. Everyone in this vault can then reveal and copy it."
+              />
+            ) : (
+              <ul className="divide-y">
+                {sharedCreds.map((sc) => (
+                  <SharedCredentialRow
+                    key={sc.id}
+                    sc={sc}
+                    orgId={orgId}
+                    vaultId={vaultId}
+                    onRemove={() => removeCred.mutate(sc.id)}
+                    removing={removeCred.isPending && removeCred.variables === sc.id}
+                  />
+                ))}
+              </ul>
+            )}
+          </Panel>
 
-  const toggle = async () => {
-    if (expanded) { setExpanded(false); return }
-    try {
-      const detail = await orgsApi.getSharedNote(orgId, vaultId, sn.id)
-      setContent(detail.content)
-      setExpanded(true)
-    } catch {
-      toast.error('Failed to decrypt note')
-    }
-  }
-
-  return (
-    <div className="px-3 py-2.5">
-      <div className="flex items-center justify-between gap-3">
-        <button className="text-sm font-medium text-left hover:underline" onClick={toggle}>
-          {sn.title}
-        </button>
-        <div className="flex items-center gap-1 shrink-0">
-          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={onRemove}>
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
+          <Panel
+            title={<>Notes <span className="ml-1 font-normal text-muted-foreground tabular">{sharedNotes.length}</span></>}
+            action={
+              <VaultAddSelect label="Add note" items={availableNotes} onAdd={(nid) => addNote.mutate(nid)} isPending={addNote.isPending} />
+            }
+            bodyClassName="p-0"
+          >
+            {notesLoading ? (
+              <RowsSkeleton />
+            ) : sharedNotes.length === 0 ? (
+              <EmptyState
+                compact
+                icon={StickyNote}
+                title="No notes shared yet"
+                description="Add a secure note — Wi-Fi details, account numbers, instructions for the family."
+              />
+            ) : (
+              <ul className="divide-y">
+                {sharedNotes.map((sn) => (
+                  <SharedNoteRow
+                    key={sn.id}
+                    sn={sn}
+                    orgId={orgId}
+                    vaultId={vaultId}
+                    onRemove={() => removeNote.mutate(sn.id)}
+                    removing={removeNote.isPending && removeNote.variables === sn.id}
+                  />
+                ))}
+              </ul>
+            )}
+          </Panel>
         </div>
-      </div>
-      {expanded && content !== null && (
-        <p className="mt-2 text-xs text-foreground/80 whitespace-pre-wrap">{content}</p>
-      )}
-    </div>
-  )
-}
 
-export default function VaultDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  return (
-    <Suspense fallback={<div className="p-4 sm:p-6 text-sm text-muted-foreground">Loading…</div>}>
-      <VaultDetailContent params={params} />
-    </Suspense>
+        <aside className="space-y-5">
+          <Panel title="Details">
+            <MetaList
+              items={[
+                ...(org ? [{ label: 'Organization', value: org.name }] : []),
+                { label: 'Credentials', value: <span className="tabular">{sharedCreds.length}</span> },
+                { label: 'Notes', value: <span className="tabular">{sharedNotes.length}</span> },
+                { label: 'Created', value: formatDate(vault.created_at, lang) },
+              ]}
+            />
+          </Panel>
+          <p className="px-1 text-xs leading-relaxed text-muted-foreground">
+            Items you add are shared as a copy. Editing the original later does not update the vault — remove and add it again.
+          </p>
+        </aside>
+      </div>
+    </PageContainer>
   )
 }

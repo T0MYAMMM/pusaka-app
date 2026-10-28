@@ -1,105 +1,89 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { toast } from 'sonner'
-import { Vault, Plus, ChevronRight } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { Building2, ChevronRight, Vault } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Skeleton } from '@/components/ui/skeleton'
+import { PageContainer, PageHeader } from '@/components/shared/page'
+import { EmptyState } from '@/components/shared/empty-state'
+import { ItemTile } from '@/components/shared/item-tile'
+import { VaultCreateDialog } from '@/components/features/vault-create-dialog'
 import { orgsApi, type Org, type SharedVault } from '@/lib/api'
+import { formatDate } from '@/lib/utils'
+import { useT } from '@/lib/i18n'
 
-const createVaultSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  description: z.string().optional(),
-})
-type CreateVaultForm = z.infer<typeof createVaultSchema>
-
-function VaultCard({ org, vault }: { org: Org; vault: SharedVault }) {
+function VaultRow({ org, vault }: { org: Org; vault: SharedVault }) {
+  const { lang } = useT()
   return (
-    <Link
-      href={`/vaults/${org.id}-${vault.id}`}
-      className="flex items-center justify-between rounded-lg border bg-card p-4 transition-colors hover:bg-muted/50"
-    >
-      <div className="flex items-center gap-3">
-        <Vault className="h-5 w-5 text-muted-foreground" />
-        <div>
-          <p className="font-medium">{vault.name}</p>
-          {vault.description && <p className="text-xs text-muted-foreground">{vault.description}</p>}
-          <p className="text-xs text-muted-foreground mt-0.5">{org.name}</p>
-        </div>
+    <li className="group relative flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50 sm:gap-4 sm:px-5">
+      <ItemTile icon={Vault} tone="indigo" />
+      <div className="min-w-0 flex-1">
+        <Link
+          href={`/vaults/${org.id}-${vault.id}`}
+          className="block truncate text-sm font-semibold outline-none after:absolute after:inset-0 after:content-[''] focus-visible:after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset"
+        >
+          {vault.name}
+        </Link>
+        <p className="mt-0.5 truncate text-[0.8125rem] text-muted-foreground">
+          {vault.description || 'No description'}
+        </p>
       </div>
-      <ChevronRight className="h-4 w-4 text-muted-foreground" />
-    </Link>
+      <span className="hidden w-28 shrink-0 text-right text-xs text-muted-foreground tabular md:block">
+        {formatDate(vault.created_at, lang)}
+      </span>
+      <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground" aria-hidden="true" />
+    </li>
+  )
+}
+
+function RowsSkeleton({ rows = 3 }: { rows?: number }) {
+  return (
+    <ul className="divide-y" aria-busy="true" aria-label="Loading">
+      {Array.from({ length: rows }).map((_, i) => (
+        <li key={i} className="flex items-center gap-4 px-5 py-3">
+          <Skeleton className="size-10 rounded-lg" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-3.5 w-40" />
+            <Skeleton className="h-3 w-56" />
+          </div>
+        </li>
+      ))}
+    </ul>
   )
 }
 
 function OrgVaults({ org }: { org: Org }) {
-  const qc = useQueryClient()
-  const [creating, setCreating] = useState(false)
-
-  const { data: vaults = [] } = useQuery({
+  const { data: vaults = [], isLoading } = useQuery({
     queryKey: ['vaults', org.id],
     queryFn: () => orgsApi.listVaults(org.id),
   })
 
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<CreateVaultForm>({
-    resolver: zodResolver(createVaultSchema),
-  })
-
-  const onSubmit = async (data: CreateVaultForm) => {
-    try {
-      await orgsApi.createVault(org.id, data)
-      toast.success('Vault created')
-      qc.invalidateQueries({ queryKey: ['vaults', org.id] })
-      reset()
-      setCreating(false)
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to create vault')
-    }
-  }
-
   return (
-    <section className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h2 className="font-semibold">{org.name}</h2>
-        <Button size="sm" variant="outline" onClick={() => setCreating(!creating)}>
-          <Plus className="mr-1 h-3.5 w-3.5" />
-          New vault
-        </Button>
+    <section aria-labelledby={`org-${org.id}`} className="space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <Building2 className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+          <h2 id={`org-${org.id}`} className="truncate text-[0.9375rem] font-semibold">{org.name}</h2>
+          {!isLoading && <span className="text-sm text-muted-foreground tabular">{vaults.length}</span>}
+        </div>
+        <VaultCreateDialog org={org} />
       </div>
 
-      {creating && (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 rounded-md border p-4">
-          <div className="space-y-1.5">
-            <Label>Vault name</Label>
-            <Input placeholder="Production Secrets" {...register('name')} />
-            {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
-          </div>
-          <div className="space-y-1.5">
-            <Label>Description (optional)</Label>
-            <Input placeholder="Credentials for production infrastructure" {...register('description')} />
-          </div>
-          <div className="flex gap-2">
-            <Button type="submit" size="sm" disabled={isSubmitting}>
-              {isSubmitting ? 'Creating…' : 'Create'}
-            </Button>
-            <Button type="button" size="sm" variant="ghost" onClick={() => setCreating(false)}>
-              Cancel
-            </Button>
-          </div>
-        </form>
-      )}
-
-      {vaults.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-2">No vaults yet.</p>
+      {isLoading ? (
+        <div className="overflow-hidden rounded-xl border bg-card"><RowsSkeleton /></div>
+      ) : vaults.length === 0 ? (
+        <EmptyState
+          icon={Vault}
+          title={`No vaults in ${org.name} yet`}
+          description="Create a vault, then add the credentials and notes everyone in it should be able to use."
+          className="py-10 sm:py-12"
+        />
       ) : (
-        <div className="grid gap-2">
-          {vaults.map((v) => <VaultCard key={v.id} org={org} vault={v} />)}
+        <div className="overflow-hidden rounded-xl border bg-card">
+          <ul className="divide-y">
+            {vaults.map((v) => <VaultRow key={v.id} org={org} vault={v} />)}
+          </ul>
         </div>
       )}
     </section>
@@ -107,38 +91,36 @@ function OrgVaults({ org }: { org: Org }) {
 }
 
 export default function VaultsPage() {
+  const { t } = useT()
   const { data: orgs = [], isLoading } = useQuery({
     queryKey: ['orgs'],
     queryFn: orgsApi.list,
   })
 
-  if (isLoading) {
-    return <div className="p-4 sm:p-6 text-sm text-muted-foreground">Loading…</div>
-  }
-
   return (
-    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Shared Vaults</h1>
-        <p className="text-sm text-muted-foreground">Team credentials shared across your organizations</p>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title={t.nav.vaults}
+        description="Credentials and notes you share with your family or team, grouped by organization."
+      />
 
-      {orgs.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-8 text-center">
-          <Vault className="mx-auto h-8 w-8 text-muted-foreground mb-3" />
-          <p className="text-sm text-muted-foreground">
-            You don&apos;t belong to any organizations yet.{' '}
-            <a href="/settings/organization" className="underline underline-offset-4 hover:text-foreground">
-              Create one
-            </a>{' '}
-            to start sharing credentials with your team.
-          </p>
+      {isLoading ? (
+        <div className="space-y-3">
+          <Skeleton className="h-5 w-48" />
+          <div className="overflow-hidden rounded-xl border bg-card"><RowsSkeleton /></div>
         </div>
+      ) : orgs.length === 0 ? (
+        <EmptyState
+          icon={Vault}
+          title="Share safely with the people you trust"
+          description="Create an organization for your family or team, then add shared vaults to it."
+          action={<Button asChild><Link href="/settings/organization">Create an organization</Link></Button>}
+        />
       ) : (
         <div className="space-y-8">
           {orgs.map((org) => <OrgVaults key={org.id} org={org} />)}
         </div>
       )}
-    </div>
+    </PageContainer>
   )
 }

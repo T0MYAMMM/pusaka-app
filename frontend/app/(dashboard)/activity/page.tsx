@@ -3,32 +3,49 @@
 import { Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
-import { Activity, LogIn, LogOut, UserPlus, KeyRound, FileText, Download } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { History } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { dashboardApi } from '@/lib/api'
-import { formatDistanceToNow } from '@/lib/utils'
+import { PageContainer, PageHeader } from '@/components/shared/page'
+import { EmptyState } from '@/components/shared/empty-state'
+import { Pagination } from '@/components/shared/pagination'
+import { ActivityRow, ActivityRowsSkeleton } from '@/components/features/activity-row'
+import { dashboardApi, type ActivityItem } from '@/lib/api'
+import { formatDate } from '@/lib/utils'
+import { useT } from '@/lib/i18n'
 
-const ACTION_META: Record<string, { label: string; icon: React.ElementType; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
-  login:             { label: 'Login',            icon: LogIn,    variant: 'secondary' },
-  logout:            { label: 'Logout',           icon: LogOut,   variant: 'outline' },
-  register:          { label: 'Register',         icon: UserPlus, variant: 'secondary' },
-  create_credential: { label: 'Created',          icon: KeyRound, variant: 'default' },
-  view_credential:   { label: 'Viewed',           icon: KeyRound, variant: 'outline' },
-  update_credential: { label: 'Updated',          icon: KeyRound, variant: 'secondary' },
-  delete_credential: { label: 'Deleted',          icon: KeyRound, variant: 'destructive' },
-  create_note:       { label: 'Created',          icon: FileText, variant: 'default' },
-  view_note:         { label: 'Viewed',           icon: FileText, variant: 'outline' },
-  update_note:       { label: 'Updated',          icon: FileText, variant: 'secondary' },
-  delete_note:       { label: 'Deleted',          icon: FileText, variant: 'destructive' },
-  export_data:       { label: 'Export',           icon: Download, variant: 'secondary' },
+const dayKey = (iso: string) => {
+  const d = new Date(iso)
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+}
+
+/** "Today", "Yesterday", or "Monday, 26 October" — all via Intl. */
+function dayLabel(iso: string, lang: string) {
+  const d = new Date(iso)
+  const startOf = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime()
+  const diff = Math.round((startOf(d) - startOf(new Date())) / 86_400_000)
+  if (diff === 0 || diff === -1) {
+    const s = new Intl.RelativeTimeFormat(lang, { numeric: 'auto' }).format(diff, 'day')
+    return s.charAt(0).toUpperCase() + s.slice(1)
+  }
+  const sameYear = d.getFullYear() === new Date().getFullYear()
+  return formatDate(iso, lang, { weekday: 'long', day: 'numeric', month: 'long', ...(sameYear ? {} : { year: 'numeric' }) })
+}
+
+function groupByDay(items: ActivityItem[]) {
+  const groups: { key: string; first: string; items: ActivityItem[] }[] = []
+  for (const item of items) {
+    const key = dayKey(item.timestamp)
+    const last = groups[groups.length - 1]
+    if (last?.key === key) last.items.push(item)
+    else groups.push({ key, first: item.timestamp, items: [item] })
+  }
+  return groups
 }
 
 function ActivityList() {
   const sp = useSearchParams()
   const router = useRouter()
+  const { t, lang } = useT()
   const page = Number(sp.get('page') ?? 1)
 
   const { data, isLoading } = useQuery({
@@ -36,45 +53,49 @@ function ActivityList() {
     queryFn: () => dashboardApi.activity({ page, limit: 25 }),
   })
 
-  const goPage = (p: number) => router.push(`/activity?page=${p}`)
+  const goPage = (p: number) => router.push(p > 1 ? `/activity?page=${p}` : '/activity')
 
   return (
-    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold">Activity Log</h1>
+    <PageContainer>
+      <PageHeader
+        title={t.nav.activity}
+        description={
+          data
+            ? `${data.total} events — sign-ins and changes to your vault, newest first.`
+            : 'Sign-ins and changes to your vault, newest first.'
+        }
+      />
 
-      <Card>
-        <CardHeader><CardTitle className="text-base flex items-center gap-2"><Activity className="h-4 w-4" />Recent Actions</CardTitle></CardHeader>
-        <CardContent className="space-y-1 p-0">
-          {isLoading
-            ? Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="mx-6 mb-2 h-12" />)
-            : data?.items.length === 0
-            ? <p className="p-6 text-sm text-muted-foreground">No activity yet.</p>
-            : data?.items.map((a, i) => {
-                const meta = ACTION_META[a.action] ?? { label: a.action, icon: Activity, variant: 'outline' as const }
-                const Icon = meta.icon
-                return (
-                  <div key={a.id} className={`flex items-center gap-4 px-6 py-3 ${i % 2 === 0 ? 'bg-muted/30' : ''}`}>
-                    <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm">{a.description}</p>
-                      {a.ip_address && <p className="text-xs text-muted-foreground">from {a.ip_address}</p>}
-                    </div>
-                    <Badge variant={meta.variant} className="shrink-0 text-xs">{meta.label}</Badge>
-                    <span className="shrink-0 text-xs text-muted-foreground">{formatDistanceToNow(a.timestamp)}</span>
-                  </div>
-                )
-              })}
-        </CardContent>
-      </Card>
-
-      {data && data.pages > 1 && (
-        <div className="flex justify-center gap-2">
-          <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => goPage(page - 1)}>Previous</Button>
-          <span className="flex items-center px-2 text-sm">{page} / {data.pages}</span>
-          <Button variant="outline" size="sm" disabled={page >= data.pages} onClick={() => goPage(page + 1)}>Next</Button>
+      {isLoading ? (
+        <div className="space-y-3">
+          <Skeleton className="h-4 w-24" />
+          <div className="overflow-hidden rounded-xl border bg-card"><ActivityRowsSkeleton rows={8} /></div>
+        </div>
+      ) : !data?.items.length ? (
+        <EmptyState
+          icon={History}
+          title="Nothing has happened yet"
+          description="Every sign-in, view and change to your credentials and notes is recorded here, so you can spot anything unexpected."
+        />
+      ) : (
+        <div className="space-y-6">
+          {groupByDay(data.items).map((g) => (
+            <section key={g.key} aria-labelledby={`day-${g.key}`} className="space-y-2">
+              <h2 id={`day-${g.key}`} className="px-1 text-[0.8125rem] font-semibold text-muted-foreground">
+                {dayLabel(g.first, lang)}
+              </h2>
+              <div className="overflow-hidden rounded-xl border bg-card">
+                <ul className="divide-y">
+                  {g.items.map((a) => <ActivityRow key={a.id} item={a} />)}
+                </ul>
+              </div>
+            </section>
+          ))}
         </div>
       )}
-    </div>
+
+      {data && <Pagination page={page} pages={data.pages} onPageChange={goPage} />}
+    </PageContainer>
   )
 }
 
