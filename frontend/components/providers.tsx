@@ -22,7 +22,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           <TooltipProvider delayDuration={300}>
             {children}
           </TooltipProvider>
-          <Toaster richColors position="top-right" />
+          <Toaster position="bottom-right" />
         </QueryClientProvider>
       </I18nProvider>
     </ThemeProvider>

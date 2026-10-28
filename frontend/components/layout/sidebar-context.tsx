@@ -1,6 +1,7 @@
 'use client'
 
-import { createContext, useContext, useState, type ReactNode } from 'react'
+import { createContext, useContext, type ReactNode } from 'react'
+import { useLocalPreference } from '@/lib/local-store'
 
 interface SidebarContextValue {
   collapsed: boolean
@@ -9,19 +10,12 @@ interface SidebarContextValue {
 
 const SidebarContext = createContext<SidebarContextValue>({ collapsed: false, toggle: () => {} })
 
-export function SidebarProvider({ children }: { children: ReactNode }) {
-  const [collapsed, setCollapsed] = useState(() => {
-    if (typeof window === 'undefined') return false
-    return localStorage.getItem('sidebar-collapsed') === 'true'
-  })
+const isBool = (v: string): v is 'true' | 'false' => v === 'true' || v === 'false'
 
-  const toggle = () => {
-    setCollapsed((prev) => {
-      const next = !prev
-      localStorage.setItem('sidebar-collapsed', String(next))
-      return next
-    })
-  }
+export function SidebarProvider({ children }: { children: ReactNode }) {
+  const [stored, setStored] = useLocalPreference<'true' | 'false'>('sidebar-collapsed', 'false', isBool)
+  const collapsed = stored === 'true'
+  const toggle = () => setStored(collapsed ? 'false' : 'true')
 
   return (
     <SidebarContext.Provider value={{ collapsed, toggle }}>

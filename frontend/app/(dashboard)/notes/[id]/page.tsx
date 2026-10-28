@@ -5,21 +5,28 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Edit, ArrowLeft } from 'lucide-react'
+import { Pencil, StickyNote } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Badge } from '@/components/ui/badge'
+import { TypeBadge } from '@/components/features/credential-type-badge'
 import { FavoriteButton } from '@/components/features/favorite-button'
 import { CopyButton } from '@/components/features/copy-button'
 import { DeleteDialog } from '@/components/features/delete-dialog'
+import { PageContainer, PageHeader, Panel } from '@/components/shared/page'
+import { ItemTile } from '@/components/shared/item-tile'
+import { EmptyState } from '@/components/shared/empty-state'
+import { TagList } from '@/components/shared/badges'
+import { MetaList } from '@/components/shared/kbd'
 import { notesApi } from '@/lib/api'
-import { formatDistanceToNow } from '@/lib/utils'
+import { noteMeta } from '@/lib/item-meta'
+import { cn, formatDate, formatDistanceToNow } from '@/lib/utils'
+import { useT } from '@/lib/i18n'
 
 export default function NoteDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
   const qc = useQueryClient()
+  const { t, lang } = useT()
 
   const { data, isLoading } = useQuery({
     queryKey: ['note', id],
@@ -30,51 +37,107 @@ export default function NoteDetailPage({ params }: { params: Promise<{ id: strin
     mutationFn: () => notesApi.delete(Number(id)),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['notes'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
       toast.success('Note deleted')
       router.push('/notes')
     },
-    onError: () => toast.error('Delete failed'),
+    onError: () => toast.error('Could not delete. Try again in a moment.'),
   })
 
-  if (isLoading) return (
-    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-4">
-      <Skeleton className="h-8 w-48" />
-      <Skeleton className="h-64" />
-    </div>
-  )
+  if (isLoading) {
+    return (
+      <PageContainer className="space-y-6">
+        <Skeleton className="h-5 w-28" />
+        <div className="flex items-center gap-4">
+          <Skeleton className="size-14 rounded-xl" />
+          <div className="space-y-2"><Skeleton className="h-8 w-56" /><Skeleton className="h-4 w-32" /></div>
+        </div>
+        <div className="grid gap-5 lg:grid-cols-[1fr_18rem]">
+          <Skeleton className="h-80 rounded-xl" />
+          <Skeleton className="h-48 rounded-xl" />
+        </div>
+      </PageContainer>
+    )
+  }
 
-  if (!data) return <div className="p-4 sm:p-6 text-sm text-muted-foreground">Note not found.</div>
+  if (!data) {
+    return (
+      <PageContainer>
+        <EmptyState
+          icon={StickyNote}
+          title="This note doesn’t exist"
+          description="It may have been deleted, or the link is wrong."
+          action={<Button asChild variant="outline"><Link href="/notes">Back to notes</Link></Button>}
+        />
+      </PageContainer>
+    )
+  }
+
+  const meta = noteMeta(data.type)
+  const technical = data.type === 'technical'
 
   return (
-    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center gap-3">
-        <Link href="/notes"><Button variant="ghost" size="icon"><ArrowLeft className="h-4 w-4" /></Button></Link>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold">{data.title}</h1>
-          <div className="flex items-center gap-2 mt-1">
-            <Badge variant="secondary">{data.type}</Badge>
-            {data.tags?.split(',').map((t) => <Badge key={t} variant="outline" className="text-xs">{t.trim()}</Badge>)}
-          </div>
+    <PageContainer>
+      <PageHeader
+        back={{ href: '/notes', label: t.nav.notes }}
+        leading={<ItemTile icon={meta.icon} tone={meta.tone} size="lg" />}
+        title={data.title}
+        actions={
+          <>
+            <FavoriteButton id={data.id} kind="note" isFavorite={data.is_favorite} queryKey={['note', id]} className="size-10" />
+            <Button variant="outline" asChild>
+              <Link href={`/notes/${id}/edit`}><Pencil aria-hidden="true" />{t.common.edit}</Link>
+            </Button>
+            <DeleteDialog itemName={data.title} onConfirm={() => doDelete()} isPending={deleting} />
+          </>
+        }
+      >
+        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+          <TypeBadge meta={meta} />
+          <TagList tags={data.tags} />
         </div>
-        <FavoriteButton id={data.id} kind="note" isFavorite={data.is_favorite} queryKey={['note', id]} />
-        <Link href={`/notes/${id}/edit`}><Button variant="outline" size="sm"><Edit className="mr-2 h-4 w-4" />Edit</Button></Link>
-        <DeleteDialog itemName={data.title} onConfirm={() => doDelete()} isPending={deleting} />
+      </PageHeader>
+
+      <div className="grid items-start gap-5 lg:grid-cols-[1fr_18rem]">
+        <Panel
+          title="Note"
+          action={data.content ? <CopyButton value={data.content} label="Note" /> : undefined}
+          bodyClassName="px-5 py-5 sm:px-6"
+        >
+          {data.content ? (
+            <div
+              className={cn(
+                'max-w-[75ch] whitespace-pre-wrap break-words',
+                technical ? 'font-mono text-sm leading-6' : 'text-[0.9375rem] leading-relaxed',
+              )}
+              translate={technical ? 'no' : undefined}
+            >
+              {data.content}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              This note is empty.{' '}
+              <Link href={`/notes/${id}/edit`} className="font-medium text-primary hover:underline">Add content</Link>
+            </p>
+          )}
+        </Panel>
+
+        <aside className="space-y-5">
+          <Panel title="Details">
+            <MetaList
+              items={[
+                { label: 'Category', value: meta.label },
+                { label: 'Created', value: formatDate(data.created_at, lang) },
+                { label: 'Updated', value: formatDistanceToNow(data.updated_at, lang) },
+                ...(data.last_accessed ? [{ label: 'Last viewed', value: formatDistanceToNow(data.last_accessed, lang) }] : []),
+              ]}
+            />
+          </Panel>
+          <p className="px-1 text-xs leading-relaxed text-muted-foreground">
+            Copied text is cleared from your clipboard after 30 seconds.
+          </p>
+        </aside>
       </div>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base">Content</CardTitle>
-          <CopyButton value={data.content} label="Note content" />
-        </CardHeader>
-        <CardContent>
-          <pre className="whitespace-pre-wrap text-sm font-mono leading-relaxed">{data.content}</pre>
-        </CardContent>
-      </Card>
-
-      <p className="text-xs text-muted-foreground">
-        Created {formatDistanceToNow(data.created_at)} · Updated {formatDistanceToNow(data.updated_at)}
-        {data.last_accessed && ` · Last viewed ${formatDistanceToNow(data.last_accessed)}`}
-      </p>
-    </div>
+    </PageContainer>
   )
 }

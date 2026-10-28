@@ -7,9 +7,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
-  --font-serif: var(--font-playfair);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -27,6 +26,7 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -39,9 +39,16 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --color-sage: var(--sage);
-  --color-mist: var(--mist);
-  --color-clay: var(--clay);
+  --color-brass: var(--brass);
+  --color-brass-soft: var(--brass-soft);
+  --color-brass-foreground: var(--brass-foreground);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -52,157 +59,160 @@
 }
 
 /* ───────────────────────────────────────────────────────────────────
-   Pusaka — "Sage & Linen"
+   Pusaka — "Nila & Kuningan" (indigo & brass)
 
-   A soft, low-chroma palette built on sage green, warm linen and a
-   muted clay accent. Chosen over the previous dark-brown/gold scheme
-   because a family vault should read calm and warm rather than heavy.
-   Every pair below meets WCAG AA: 4.5:1 for body text, 3:1 for the
-   interactive boundaries (--input, --ring). --border is decorative
-   only (dividers, card outlines); interactive outlines use --input.
+   Nila is the indigo of hand-dyed batik tulis; kuningan is the brass of
+   an heirloom chest's fittings. Indigo carries the interface; brass is
+   rationed to the few things that deserve a glint — favorites, the
+   brand mark, the vault-health signal. The background is a cool paper
+   white rather than cream so the indigo reads crisp.
+
+   Radius hierarchy: chips 6px · controls 8px · panels 14px · hero 18px.
+   Text pairs meet WCAG AA (4.5:1); --input and --ring meet 3:1 against
+   the card surface. --border is decorative only.
    ─────────────────────────────────────────────────────────────────── */
 
-/* ─── Pusaka Light Mode ─────────────────────────────────────────── */
 :root {
-  --radius: 0.75rem;
+  --radius: 0.625rem;
 
-  /* Brand accents */
-  --sage:   #4E6B5C;
-  --mist:   #5B7183;
-  --clay:   #9E4B39;
+  --background: #F4F5FA;
+  --foreground: #171B34;
 
-  /* Surface */
-  --background:  #F5F7F2;
-  --foreground:  #2E3A33;
+  --card: #FFFFFF;
+  --card-foreground: #171B34;
+  --popover: #FFFFFF;
+  --popover-foreground: #171B34;
 
-  /* Cards / Popovers */
-  --card:                 #FFFFFF;
-  --card-foreground:      #2E3A33;
-  --popover:              #FFFFFF;
-  --popover-foreground:   #2E3A33;
+  --primary: #2B3478;
+  --primary-foreground: #F7F8FD;
 
-  /* Primary — Sage */
-  --primary:              #4E6B5C;
-  --primary-foreground:   #F5F7F2;
+  --secondary: #E9EBF5;
+  --secondary-foreground: #232A55;
 
-  /* Secondary */
-  --secondary:            #E6EAE1;
-  --secondary-foreground: #2E3A33;
+  --muted: #EEF0F7;
+  --muted-foreground: #565D80;
 
-  /* Muted */
-  --muted:                #E6EAE1;
-  --muted-foreground:     #5C6B61;
+  --accent: #E7EAF8;
+  --accent-foreground: #1F2766;
 
-  /* Accent — pale sage wash */
-  --accent:               #E2EBE3;
-  --accent-foreground:    #2E3A33;
+  --destructive: #B3372E;
+  --destructive-foreground: #FFFFFF;
+  --danger-soft: #FBE9E7;
 
-  /* Destructive — muted clay */
-  --destructive:          #9E4B39;
+  --success: #2B7A57;
+  --success-soft: #E3F3EB;
+  --warning: #8F6210;
+  --warning-soft: #FAF0D9;
+  --info: #3A56B0;
+  --info-soft: #E6EBFA;
 
-  /* Borders / Inputs */
-  --border:   #D6DDD2;
-  --input:    #838F84;
-  --ring:     #5F7F6C;
+  --brass: #B07F24;
+  --brass-soft: #F5EBD3;
+  --brass-foreground: #6E4E12;
 
-  /* Chart palette */
-  --chart-1: #4E6B5C;
-  --chart-2: #5B7183;
-  --chart-3: #A98C5F;
-  --chart-4: #9E4B39;
-  --chart-5: #7E9A88;
+  --border: #E1E4EF;
+  --input: #858BAA;
+  --ring: #4A55B5;
 
-  /* Decorative surface texture */
-  --texture-strong: rgba(78, 107, 92, 0.05);
-  --texture-soft:   rgba(78, 107, 92, 0.03);
+  --chart-1: #4553B8;
+  --chart-2: #5C6BD1;
+  --chart-3: #B07F24;
+  --chart-4: #2B7A57;
+  --chart-5: #9AA3D9;
 
-  /* Sidebar — deep sage */
-  --sidebar:                   #2F3F36;
-  --sidebar-foreground:        #EEF2EC;
-  --sidebar-primary:           #A9C9B5;
-  --sidebar-primary-foreground:#2F3F36;
-  --sidebar-accent:            #3C4E43;
-  --sidebar-accent-foreground: #EEF2EC;
-  --sidebar-border:            rgba(238,242,236,0.14);
-  --sidebar-ring:              #A9C9B5;
+  --pattern: rgba(43, 52, 120, 0.07);
+
+  --sidebar: #161B3D;
+  --sidebar-foreground: #E4E7F7;
+  --sidebar-primary: #D9AE55;
+  --sidebar-primary-foreground: #161B3D;
+  --sidebar-accent: #252B5C;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: rgba(228, 231, 247, 0.10);
+  --sidebar-ring: #D9AE55;
 }
 
-/* ─── Pusaka Dark Mode ──────────────────────────────────────────── */
 .dark {
-  /* Brand accents */
-  --sage:   #8FB39F;
-  --mist:   #93A8B8;
-  --clay:   #D08A73;
+  --background: #0D1022;
+  --foreground: #E6E8F5;
 
-  /* Surface */
-  --background:  #161B18;
-  --foreground:  #E7ECE6;
+  --card: #141831;
+  --card-foreground: #E6E8F5;
+  --popover: #181C38;
+  --popover-foreground: #E6E8F5;
 
-  /* Cards */
-  --card:                 #1E2421;
-  --card-foreground:      #E7ECE6;
-  --popover:              #1E2421;
-  --popover-foreground:   #E7ECE6;
+  --primary: #AEB8FF;
+  --primary-foreground: #101436;
 
-  /* Primary — Sage, lifted for dark surfaces */
-  --primary:              #8FB39F;
-  --primary-foreground:   #141A16;
+  --secondary: #1E2342;
+  --secondary-foreground: #DDE1FF;
 
-  /* Secondary */
-  --secondary:            #28302B;
-  --secondary-foreground: #E7ECE6;
+  --muted: #1A1F3B;
+  --muted-foreground: #9CA2C6;
 
-  /* Muted */
-  --muted:                #28302B;
-  --muted-foreground:     #9FAC9F;
+  --accent: #222851;
+  --accent-foreground: #E2E5FF;
 
-  /* Accent */
-  --accent:               #28302B;
-  --accent-foreground:    #A9C9B5;
+  --destructive: #F0857A;
+  --destructive-foreground: #2A0C08;
+  --danger-soft: rgba(240, 133, 122, 0.14);
 
-  /* Destructive */
-  --destructive:          #D08A73;
+  --success: #6CCB9C;
+  --success-soft: rgba(108, 203, 156, 0.14);
+  --warning: #E7B75A;
+  --warning-soft: rgba(231, 183, 90, 0.14);
+  --info: #93A8FF;
+  --info-soft: rgba(147, 168, 255, 0.14);
 
-  /* Borders / Inputs */
-  --border:   #333C36;
-  --input:    #687767;
-  --ring:     #7FA08C;
+  --brass: #D9AE55;
+  --brass-soft: rgba(217, 174, 85, 0.15);
+  --brass-foreground: #EBC97E;
 
-  /* Charts */
-  --chart-1: #8FB39F;
-  --chart-2: #93A8B8;
-  --chart-3: #C7A97B;
-  --chart-4: #D08A73;
-  --chart-5: #B7CEC0;
+  --border: #262C4F;
+  --input: #5A6290;
+  --ring: #8D98F0;
 
-  /* Decorative surface texture */
-  --texture-strong: rgba(143, 179, 159, 0.06);
-  --texture-soft:   rgba(143, 179, 159, 0.035);
+  --chart-1: #7D8AF0;
+  --chart-2: #6E7DE0;
+  --chart-3: #D9AE55;
+  --chart-4: #6CCB9C;
+  --chart-5: #4A5396;
 
-  /* Sidebar — deepest sage */
-  --sidebar:                   #121714;
-  --sidebar-foreground:        #E7ECE6;
-  --sidebar-primary:           #8FB39F;
-  --sidebar-primary-foreground:#121714;
-  --sidebar-accent:            #222A25;
-  --sidebar-accent-foreground: #E7ECE6;
-  --sidebar-border:            rgba(231,236,230,0.10);
-  --sidebar-ring:              #7FA08C;
+  --pattern: rgba(174, 184, 255, 0.06);
+
+  --sidebar: #090B19;
+  --sidebar-foreground: #E2E5F5;
+  --sidebar-primary: #D9AE55;
+  --sidebar-primary-foreground: #090B19;
+  --sidebar-accent: #181C38;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: rgba(226, 229, 245, 0.08);
+  --sidebar-ring: #D9AE55;
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
-
-  /* Anchor links on the landing page sit under a sticky header — offset
-     the scroll target so the section heading is not hidden by it. */
   html {
+    color-scheme: light;
     scroll-behavior: smooth;
     scroll-padding-top: 5rem;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "ss01", "cv11";
+    touch-action: manipulation;
+  }
+  h1, h2, h3 {
+    text-wrap: balance;
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--primary) 22%, transparent);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -227,42 +237,78 @@
   }
 }
 
-/* ─── Batik Parang Texture ──────────────────────────────────────── */
-.batik-texture {
-  position: relative;
+@layer utilities {
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  /* A thin scrollbar for horizontally scrolling chip rows. */
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
 }
 
-.batik-texture::before {
-  content: '';
+/* ─── Kawung motif ───────────────────────────────────────────────────
+   Kawung — four petals around a point, one of the oldest batik motifs —
+   is drawn as a mask so the colour follows the theme (--pattern, or
+   currentColor via .kawung-current). Apply to any positioned element. */
+.kawung {
+  position: relative;
+  isolation: isolate;
+}
+.kawung::before {
+  content: "";
   position: absolute;
   inset: 0;
+  z-index: -1;
   pointer-events: none;
-  background-image:
-    repeating-linear-gradient(
-      135deg,
-      transparent 0px,
-      transparent 6px,
-      var(--texture-strong) 6px,
-      var(--texture-strong) 7px
-    ),
-    repeating-linear-gradient(
-      45deg,
-      transparent 0px,
-      transparent 6px,
-      var(--texture-soft) 6px,
-      var(--texture-soft) 7px
-    );
-  background-size: 14px 14px;
-  border-radius: inherit;
-  z-index: 0;
+  background-color: var(--kawung-color, var(--pattern));
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cg fill='none' stroke='black' stroke-width='1.4'%3E%3Cellipse cx='12' cy='12' rx='10.5' ry='5.5' transform='rotate(45 12 12)'/%3E%3Cellipse cx='36' cy='12' rx='10.5' ry='5.5' transform='rotate(-45 36 12)'/%3E%3Cellipse cx='12' cy='36' rx='10.5' ry='5.5' transform='rotate(-45 12 36)'/%3E%3Cellipse cx='36' cy='36' rx='10.5' ry='5.5' transform='rotate(45 36 36)'/%3E%3C/g%3E%3Cg fill='black'%3E%3Ccircle cx='24' cy='24' r='1.6'/%3E%3Ccircle cx='0' cy='0' r='1.6'/%3E%3Ccircle cx='48' cy='0' r='1.6'/%3E%3Ccircle cx='0' cy='48' r='1.6'/%3E%3Ccircle cx='48' cy='48' r='1.6'/%3E%3C/g%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cg fill='none' stroke='black' stroke-width='1.4'%3E%3Cellipse cx='12' cy='12' rx='10.5' ry='5.5' transform='rotate(45 12 12)'/%3E%3Cellipse cx='36' cy='12' rx='10.5' ry='5.5' transform='rotate(-45 36 12)'/%3E%3Cellipse cx='12' cy='36' rx='10.5' ry='5.5' transform='rotate(-45 12 36)'/%3E%3Cellipse cx='36' cy='36' rx='10.5' ry='5.5' transform='rotate(45 36 36)'/%3E%3C/g%3E%3Cg fill='black'%3E%3Ccircle cx='24' cy='24' r='1.6'/%3E%3Ccircle cx='0' cy='0' r='1.6'/%3E%3Ccircle cx='48' cy='0' r='1.6'/%3E%3Ccircle cx='0' cy='48' r='1.6'/%3E%3Ccircle cx='48' cy='48' r='1.6'/%3E%3C/g%3E%3C/svg%3E");
+  -webkit-mask-size: var(--kawung-size, 48px) var(--kawung-size, 48px);
+  mask-size: var(--kawung-size, 48px) var(--kawung-size, 48px);
+  -webkit-mask-repeat: repeat;
+  mask-repeat: repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
+/* Fade the motif out towards one edge so it reads as texture, not wallpaper. */
+.kawung-fade-b::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cg fill='none' stroke='black' stroke-width='1.4'%3E%3Cellipse cx='12' cy='12' rx='10.5' ry='5.5' transform='rotate(45 12 12)'/%3E%3Cellipse cx='36' cy='12' rx='10.5' ry='5.5' transform='rotate(-45 36 12)'/%3E%3Cellipse cx='12' cy='36' rx='10.5' ry='5.5' transform='rotate(-45 12 36)'/%3E%3Cellipse cx='36' cy='36' rx='10.5' ry='5.5' transform='rotate(45 36 36)'/%3E%3C/g%3E%3Cg fill='black'%3E%3Ccircle cx='24' cy='24' r='1.6'/%3E%3C/g%3E%3C/svg%3E"), linear-gradient(to top, black, transparent 85%);
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cg fill='none' stroke='black' stroke-width='1.4'%3E%3Cellipse cx='12' cy='12' rx='10.5' ry='5.5' transform='rotate(45 12 12)'/%3E%3Cellipse cx='36' cy='12' rx='10.5' ry='5.5' transform='rotate(-45 36 12)'/%3E%3Cellipse cx='12' cy='36' rx='10.5' ry='5.5' transform='rotate(-45 12 36)'/%3E%3Cellipse cx='36' cy='36' rx='10.5' ry='5.5' transform='rotate(45 36 36)'/%3E%3C/g%3E%3Cg fill='black'%3E%3Ccircle cx='24' cy='24' r='1.6'/%3E%3C/g%3E%3C/svg%3E"), linear-gradient(to top, black, transparent 85%);
+  -webkit-mask-size: var(--kawung-size, 48px) var(--kawung-size, 48px), 100% 100%;
+  mask-size: var(--kawung-size, 48px) var(--kawung-size, 48px), 100% 100%;
+  -webkit-mask-repeat: repeat, no-repeat;
+  mask-repeat: repeat, no-repeat;
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+.kawung-fade-r::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cg fill='none' stroke='black' stroke-width='1.4'%3E%3Cellipse cx='12' cy='12' rx='10.5' ry='5.5' transform='rotate(45 12 12)'/%3E%3Cellipse cx='36' cy='12' rx='10.5' ry='5.5' transform='rotate(-45 36 12)'/%3E%3Cellipse cx='12' cy='36' rx='10.5' ry='5.5' transform='rotate(-45 12 36)'/%3E%3Cellipse cx='36' cy='36' rx='10.5' ry='5.5' transform='rotate(45 36 36)'/%3E%3C/g%3E%3Cg fill='black'%3E%3Ccircle cx='24' cy='24' r='1.6'/%3E%3C/g%3E%3C/svg%3E"), linear-gradient(to left, black, transparent 75%);
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cg fill='none' stroke='black' stroke-width='1.4'%3E%3Cellipse cx='12' cy='12' rx='10.5' ry='5.5' transform='rotate(45 12 12)'/%3E%3Cellipse cx='36' cy='12' rx='10.5' ry='5.5' transform='rotate(-45 36 12)'/%3E%3Cellipse cx='12' cy='36' rx='10.5' ry='5.5' transform='rotate(-45 12 36)'/%3E%3Cellipse cx='36' cy='36' rx='10.5' ry='5.5' transform='rotate(45 36 36)'/%3E%3C/g%3E%3Cg fill='black'%3E%3Ccircle cx='24' cy='24' r='1.6'/%3E%3C/g%3E%3C/svg%3E"), linear-gradient(to left, black, transparent 75%);
+  -webkit-mask-size: var(--kawung-size, 48px) var(--kawung-size, 48px), 100% 100%;
+  mask-size: var(--kawung-size, 48px) var(--kawung-size, 48px), 100% 100%;
+  -webkit-mask-repeat: repeat, no-repeat;
+  mask-repeat: repeat, no-repeat;
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
 }
 
-.batik-texture > * {
-  position: relative;
-  z-index: 1;
+/* ─── The one orchestrated moment ────────────────────────────────────
+   Petals of the brand mark open once on the landing hero and auth
+   panel. Everything else in the app stays still unless the user acts. */
+@keyframes petal-open {
+  from { opacity: 0; transform: scale(0.4) rotate(-20deg); }
+  to   { opacity: 1; transform: scale(1) rotate(0deg); }
 }
-
-/* ─── Playfair Display for headings ─────────────────────────────── */
-.font-serif {
-  font-family: var(--font-playfair), Georgia, serif;
+.petal-open > * {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: petal-open 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
+.petal-open > *:nth-child(2) { animation-delay: 80ms; }
+.petal-open > *:nth-child(3) { animation-delay: 160ms; }
+.petal-open > *:nth-child(4) { animation-delay: 240ms; }
+.petal-open > *:nth-child(5) { animation-delay: 360ms; }

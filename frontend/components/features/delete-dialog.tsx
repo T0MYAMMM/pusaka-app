@@ -12,26 +12,46 @@ interface Props {
   itemName: string
   onConfirm: () => void
   isPending?: boolean
+  /** What happens on delete; defaults to permanent removal from the vault. */
+  description?: string
+  /** Render the trigger as an icon button. */
+  iconOnly?: boolean
 }
 
-export function DeleteDialog({ itemName, onConfirm, isPending }: Props) {
+export function DeleteDialog({ itemName, onConfirm, isPending, description, iconOnly = false }: Props) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive" size="sm" disabled={isPending}>
-          <Trash2 className="mr-2 h-4 w-4" />
-          Delete
-        </Button>
+        {iconOnly ? (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            disabled={isPending}
+            aria-label={`Delete ${itemName}`}
+            className="text-muted-foreground hover:bg-danger-soft hover:text-destructive"
+          >
+            <Trash2 aria-hidden="true" />
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            disabled={isPending}
+            className="text-destructive hover:bg-danger-soft hover:text-destructive"
+          >
+            <Trash2 aria-hidden="true" />
+            Delete
+          </Button>
+        )}
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete &ldquo;{itemName}&rdquo;?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. The item will be permanently removed from your vault.
+            {description ?? 'It will be permanently removed from your vault. This cannot be undone.'}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>Keep it</AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
             Delete
           </AlertDialogAction>

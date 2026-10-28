@@ -12,9 +12,10 @@ interface Props {
   kind: 'credential' | 'note' | 'document'
   isFavorite: boolean
   queryKey: unknown[]
+  className?: string
 }
 
-export function FavoriteButton({ id, kind, isFavorite, queryKey }: Props) {
+export function FavoriteButton({ id, kind, isFavorite, queryKey, className }: Props) {
   const qc = useQueryClient()
 
   const { mutate, isPending } = useMutation<void, Error, void, { prev: unknown }>({
@@ -47,20 +48,29 @@ export function FavoriteButton({ id, kind, isFavorite, queryKey }: Props) {
     },
     onError: (_e, _v, ctx) => {
       qc.setQueryData(queryKey, ctx?.prev)
-      toast.error('Failed to update favorite')
+      toast.error('Could not update favorites. Check your connection and try again.')
     },
-    onSettled: () => qc.invalidateQueries({ queryKey }),
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey })
+      // Keep the matching list and the dashboard in step with a detail-page toggle.
+      qc.invalidateQueries({ queryKey: [`${kind}s`] })
+      qc.invalidateQueries({ queryKey: [kind] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
+    },
   })
 
   return (
     <Button
       variant="ghost"
-      size="icon"
+      size="icon-sm"
       onClick={(e) => { e.preventDefault(); e.stopPropagation(); mutate() }}
       disabled={isPending}
+      aria-pressed={isFavorite}
+      aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
       title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+      className={className}
     >
-      <Star className={cn('h-4 w-4', isFavorite ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground')} />
+      <Star className={cn('size-4', isFavorite ? 'fill-brass text-brass' : 'text-muted-foreground')} aria-hidden="true" />
     </Button>
   )
 }

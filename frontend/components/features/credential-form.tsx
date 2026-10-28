@@ -1,58 +1,61 @@
 'use client'
 
-import { useForm } from 'react-hook-form'
+import Link from 'next/link'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { Loader2, WandSparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { Panel } from '@/components/shared/page'
+import { Field, FormActions, PasswordInput, StrengthMeter, fieldAria, useUnsavedChangesWarning } from '@/components/shared/form'
+import { CREDENTIAL_TYPES } from '@/lib/item-meta'
+import { generatePassword } from '@/lib/password'
 import type { CredentialDetail } from '@/lib/api'
 
-function passwordStrength(pw: string): { score: number; label: string; color: string } {
-  if (!pw) return { score: 0, label: '', color: '' }
-  let score = 0
-  if (pw.length >= 8) score++
-  if (pw.length >= 12) score++
-  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++
-  if (/[0-9]/.test(pw)) score++
-  if (/[^A-Za-z0-9]/.test(pw)) score++
-  if (score <= 1) return { score, label: 'Weak', color: 'bg-destructive' }
-  if (score <= 2) return { score, label: 'Fair', color: 'bg-yellow-500' }
-  if (score <= 3) return { score, label: 'Good', color: 'bg-blue-500' }
-  return { score, label: 'Strong', color: 'bg-green-500' }
-}
-
-const TYPES = ['website','email','social','banking','work','personal','server','api','other'] as const
+const ENVS = [
+  { value: 'global', label: 'Global — used everywhere' },
+  { value: 'prod', label: 'Production' },
+  { value: 'staging', label: 'Staging' },
+  { value: 'dev', label: 'Development' },
+]
 
 const schema = z.object({
-  label: z.string().min(1, 'Label is required'),
+  label: z.string().trim().min(1, 'Give it a name you will recognise, e.g. “BCA KlikPay”.'),
   type: z.string().min(1),
-  website_url: z.string().url('Must be a valid URL').or(z.literal('')).optional(),
+  website_url: z.string().url('Enter a full address starting with https://').or(z.literal('')).optional(),
   username: z.string().optional(),
-  email: z.string().email('Invalid email').or(z.literal('')).optional(),
+  email: z.string().email('Enter an email like name@example.com').or(z.literal('')).optional(),
   password: z.string().optional(),
   secret_key: z.string().optional(),
   note: z.string().optional(),
   tags: z.string().optional(),
+  env: z.string().optional(),
+  expires_at: z.string().optional(),
 })
 
-export type CredentialFormValues = z.infer<typeof schema>
+type FormFields = z.infer<typeof schema>
+
+/** What the API receives: expiry as ISO timestamp or null. */
+export type CredentialFormValues = Omit<FormFields, 'expires_at'> & { expires_at: string | null }
 
 interface Props {
   defaultValues?: Partial<CredentialDetail>
   onSubmit: (data: CredentialFormValues) => Promise<void>
   isSubmitting?: boolean
   submitLabel: string
+  cancelHref: string
 }
 
-export function CredentialForm({ defaultValues, onSubmit, isSubmitting, submitLabel }: Props) {
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<CredentialFormValues>({
+export function CredentialForm({ defaultValues, onSubmit, isSubmitting, submitLabel, cancelHref }: Props) {
+  const { register, handleSubmit, setValue, control, formState: { errors, isDirty } } = useForm<FormFields>({
     resolver: zodResolver(schema),
     defaultValues: {
       label: defaultValues?.label ?? '',
-      type: defaultValues?.type ?? 'other',
+      type: defaultValues?.type ?? 'website',
       website_url: defaultValues?.website_url ?? '',
       username: defaultValues?.username ?? '',
       email: defaultValues?.email ?? '',
@@ -60,88 +63,130 @@ export function CredentialForm({ defaultValues, onSubmit, isSubmitting, submitLa
       secret_key: defaultValues?.secret_key ?? '',
       note: defaultValues?.note ?? '',
       tags: defaultValues?.tags ?? '',
+      env: defaultValues?.env ?? 'global',
+      expires_at: defaultValues?.expires_at ? defaultValues.expires_at.slice(0, 10) : '',
     },
   })
 
-  const type = watch('type')
-  const password = watch('password') ?? ''
-  const strength = passwordStrength(password)
+  useUnsavedChangesWarning(isDirty && !isSubmitting)
+
+  const type = useWatch({ control, name: 'type' })
+  const env = useWatch({ control, name: 'env' })
+  const password = useWatch({ control, name: 'password' }) ?? ''
+
+  const submit = handleSubmit(async ({ expires_at, ...rest }) => {
+    await onSubmit({ ...rest, expires_at: expires_at ? new Date(expires_at).toISOString() : null })
+  })
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="label">Label *</Label>
-          <Input id="label" placeholder="e.g. GitHub Work Account" {...register('label')} />
-          {errors.label && <p className="text-xs text-destructive">{errors.label.message}</p>}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="type">Type</Label>
-          <Select value={type} onValueChange={(v) => setValue('type', v)}>
-            <SelectTrigger id="type"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="website_url">Website URL</Label>
-        <Input id="website_url" placeholder="https://example.com" {...register('website_url')} />
-        {errors.website_url && <p className="text-xs text-destructive">{errors.website_url.message}</p>}
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="username">Username</Label>
-          <Input id="username" autoComplete="off" {...register('username')} />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" autoComplete="off" {...register('email')} />
-          {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
-        </div>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
-          <Input id="password" type="password" autoComplete="new-password" {...register('password')} />
-          {password && (
-            <div className="space-y-1">
-              <div className="flex gap-1">
-                {[1,2,3,4].map((i) => (
-                  <div
-                    key={i}
-                    className={`h-1 flex-1 rounded-full transition-colors ${i <= Math.ceil(strength.score / 1.25) ? strength.color : 'bg-muted'}`}
-                  />
+    <form onSubmit={submit} noValidate className="space-y-5">
+      <Panel title="What is it?" description="A name and category help you find it later.">
+        <div className="grid gap-5 sm:grid-cols-[1fr_12rem]">
+          <Field id="label" label="Name" required error={errors.label?.message}>
+            <Input {...fieldAria('label', errors.label?.message)} placeholder="e.g. BCA KlikPay…" autoComplete="off" {...register('label')} />
+          </Field>
+          <Field id="type" label="Category">
+            <Select value={type} onValueChange={(v) => setValue('type', v, { shouldDirty: true })}>
+              <SelectTrigger id="type" className="w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {Object.entries(CREDENTIAL_TYPES).map(([value, { label, icon: Icon }]) => (
+                  <SelectItem key={value} value={value}>
+                    <Icon aria-hidden="true" />
+                    {label}
+                  </SelectItem>
                 ))}
-              </div>
-              <p className="text-xs text-muted-foreground">{strength.label}</p>
-            </div>
-          )}
+              </SelectContent>
+            </Select>
+          </Field>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="secret_key">Secret Key / 2FA</Label>
-          <Input id="secret_key" autoComplete="off" {...register('secret_key')} />
+        <Field id="website_url" label="Website" className="mt-5" error={errors.website_url?.message}>
+          <Input
+            {...fieldAria('website_url', errors.website_url?.message)}
+            type="url"
+            inputMode="url"
+            autoComplete="off"
+            spellCheck={false}
+            placeholder="https://example.com…"
+            {...register('website_url')}
+          />
+        </Field>
+      </Panel>
+
+      <Panel title="Sign-in details" description="Encrypted with your vault key before it is stored.">
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field id="username" label="Username">
+            <Input id="username" autoComplete="off" spellCheck={false} {...register('username')} />
+          </Field>
+          <Field id="email" label="Email" error={errors.email?.message}>
+            <Input
+              {...fieldAria('email', errors.email?.message)}
+              type="email"
+              inputMode="email"
+              autoComplete="off"
+              spellCheck={false}
+              {...register('email')}
+            />
+          </Field>
+          <Field id="password" label="Password" className="sm:col-span-2">
+            <PasswordInput
+              id="password"
+              autoComplete="new-password"
+              {...register('password')}
+              trailing={
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={() => setValue('password', generatePassword(20), { shouldDirty: true })}
+                      aria-label="Generate a strong password"
+                      className="inline-flex size-8 items-center justify-center rounded-md text-brass-foreground transition-colors hover:bg-brass-soft"
+                    >
+                      <WandSparkles className="size-4" aria-hidden="true" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>Generate a strong password</TooltipContent>
+                </Tooltip>
+              }
+            />
+            <StrengthMeter password={password} />
+          </Field>
+          <Field id="secret_key" label="Secret key or 2FA seed" className="sm:col-span-2" hint="Recovery codes, TOTP seeds or API secrets.">
+            <PasswordInput id="secret_key" autoComplete="off" aria-describedby="secret_key-hint" {...register('secret_key')} />
+          </Field>
         </div>
-      </div>
+      </Panel>
 
-      <div className="space-y-2">
-        <Label htmlFor="tags">Tags</Label>
-        <Input id="tags" placeholder="work, personal, dev (comma-separated)" {...register('tags')} />
-      </div>
+      <Panel title="Organise" description="Optional — environment, expiry, tags and notes.">
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field id="env" label="Environment">
+            <Select value={env} onValueChange={(v) => setValue('env', v, { shouldDirty: true })}>
+              <SelectTrigger id="env" className="w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {ENVS.map((e) => <SelectItem key={e.value} value={e.value}>{e.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field id="expires_at" label="Expires on" hint="You will be reminded 14 days before.">
+            <Input id="expires_at" type="date" aria-describedby="expires_at-hint" {...register('expires_at')} />
+          </Field>
+          <Field id="tags" label="Tags" className="sm:col-span-2" hint="Separate with commas.">
+            <Input id="tags" autoComplete="off" placeholder="family, bank…" aria-describedby="tags-hint" {...register('tags')} />
+          </Field>
+          <Field id="note" label="Notes" className="sm:col-span-2">
+            <Textarea id="note" rows={3} placeholder="Security questions, account numbers, anything else…" {...register('note')} />
+          </Field>
+        </div>
+      </Panel>
 
-      <div className="space-y-2">
-        <Label htmlFor="note">Notes</Label>
-        <Textarea id="note" rows={3} placeholder="Additional notes…" {...register('note')} />
-      </div>
-
-      <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? 'Saving…' : submitLabel}
-      </Button>
+      <FormActions>
+        <Button variant="ghost" asChild>
+          <Link href={cancelHref}>Cancel</Link>
+        </Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting && <Loader2 className="animate-spin" aria-hidden="true" />}
+          {isSubmitting ? 'Saving…' : submitLabel}
+        </Button>
+      </FormActions>
     </form>
   )
 }

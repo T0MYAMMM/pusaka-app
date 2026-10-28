@@ -2,15 +2,16 @@
 
 import { use } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ArrowLeft } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { KeyRound } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Button } from '@/components/ui/button'
 import { CredentialForm, type CredentialFormValues } from '@/components/features/credential-form'
+import { EmptyState } from '@/components/shared/empty-state'
+import { PageContainer, PageHeader } from '@/components/shared/page'
 import { credentialsApi } from '@/lib/api'
+import Link from 'next/link'
 
 export default function EditCredentialPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -27,27 +28,46 @@ export default function EditCredentialPage({ params }: { params: Promise<{ id: s
     onSuccess: (cred) => {
       qc.invalidateQueries({ queryKey: ['credentials'] })
       qc.invalidateQueries({ queryKey: ['credential', id] })
-      toast.success(`"${cred.label}" updated`)
+      toast.success(`“${cred.label}” updated`)
       router.push(`/credentials/${id}`)
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : 'Update failed'),
+    onError: (e) => toast.error(e instanceof Error ? e.message : 'Could not save changes. Try again.'),
   })
 
-  if (isLoading) return <div className="p-4 sm:p-6 space-y-4"><Skeleton className="h-8 w-48" /><Skeleton className="h-96" /></div>
-  if (!data) return <div className="p-4 sm:p-6 text-sm text-muted-foreground">Credential not found.</div>
+  if (isLoading) {
+    return (
+      <PageContainer size="narrow" className="space-y-5">
+        <Skeleton className="h-5 w-24" />
+        <Skeleton className="h-9 w-64" />
+        <Skeleton className="h-56 rounded-xl" />
+        <Skeleton className="h-72 rounded-xl" />
+      </PageContainer>
+    )
+  }
+
+  if (!data) {
+    return (
+      <PageContainer size="narrow">
+        <EmptyState
+          icon={KeyRound}
+          title="This credential doesn’t exist"
+          description="It may have been deleted, or the link is wrong."
+          action={<Button asChild variant="outline"><Link href="/credentials">Back to credentials</Link></Button>}
+        />
+      </PageContainer>
+    )
+  }
 
   return (
-    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center gap-3">
-        <Link href={`/credentials/${id}`}><Button variant="ghost" size="icon"><ArrowLeft className="h-4 w-4" /></Button></Link>
-        <h1 className="text-2xl font-bold">Edit {data.label}</h1>
-      </div>
-      <Card>
-        <CardHeader><CardTitle className="text-base">Credential Details</CardTitle></CardHeader>
-        <CardContent>
-          <CredentialForm defaultValues={data} submitLabel="Update Credential" isSubmitting={isPending} onSubmit={async (d) => { await mutateAsync(d) }} />
-        </CardContent>
-      </Card>
-    </div>
+    <PageContainer size="narrow">
+      <PageHeader back={{ href: `/credentials/${id}`, label: data.label }} title={`Edit ${data.label}`} />
+      <CredentialForm
+        defaultValues={data}
+        submitLabel="Save changes"
+        cancelHref={`/credentials/${id}`}
+        isSubmitting={isPending}
+        onSubmit={async (d) => { await mutateAsync(d) }}
+      />
+    </PageContainer>
   )
 }

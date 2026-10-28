@@ -3,195 +3,231 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import {
-  ShieldCheck, Terminal, Users, Key, Lock, Zap, ChevronDown, ChevronUp,
-  Globe, GitBranch, Clock, ArrowRight, Check, Star, Loader2,
+  Check, ChevronDown, Clock, Copy, Crown, Eye, EyeOff, FolderArchive, Globe, KeyRound,
+  Landmark, Loader2, Lock, Server, Shield, StickyNote, Terminal, User, Users, IdCard,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { toast } from 'sonner'
+import { Logo, LogoMark } from '@/components/brand/logo'
+import { ItemTile } from '@/components/shared/item-tile'
+import { SecretText } from '@/components/shared/secret-text'
+import { StatusPill } from '@/components/shared/badges'
+import { cn } from '@/lib/utils'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 
-/**
- * One container rhythm for every landing section: same max width, same
- * gutters. Sections that want narrower copy nest a second max-width
- * inside instead of shrinking the outer container, so the horizontal
- * gutter never shifts between sections.
- */
+/** One container rhythm for every section. */
 const CONTAINER = 'mx-auto w-full max-w-6xl px-5 sm:px-6 lg:px-8'
-
-/** Vertical rhythm shared by every section. */
-const SECTION = 'py-16 sm:py-20 lg:py-24'
+const SECTION = 'py-20 sm:py-24 lg:py-28'
 
 const NAV_LINKS = [
-  { href: '#features', label: 'Features' },
-  { href: '#how-it-works', label: 'How it works' },
+  { href: '#keep', label: 'What you keep' },
+  { href: '#share', label: 'Sharing' },
+  { href: '#developers', label: 'For developers' },
   { href: '#pricing', label: 'Pricing' },
   { href: '#faq', label: 'FAQ' },
 ]
 
-// ---------------------------------------------------------------------------
-// Nav
-// ---------------------------------------------------------------------------
+// ─── Nav ─────────────────────────────────────────────────────────────
 
 function Nav() {
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/85 backdrop-blur-sm">
+    <header className="sticky top-0 z-40 border-b border-transparent bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/70">
       <div className={`${CONTAINER} flex h-16 items-center justify-between gap-4`}>
-        <Link
-          href="/"
-          className="flex shrink-0 items-center gap-2 font-serif text-xl font-bold tracking-wide"
-        >
-          <ShieldCheck className="h-5 w-5 text-primary" aria-hidden="true" />
-          Pusaka
+        <Link href="/" className="rounded-lg" aria-label="Pusaka home">
+          <Logo />
         </Link>
-        <nav aria-label="Sections" className="hidden md:flex items-center gap-6 text-sm">
+        <nav aria-label="Sections" className="hidden items-center gap-7 text-sm font-medium md:flex">
           {NAV_LINKS.map(({ href, label }) => (
-            <a
-              key={href}
-              href={href}
-              className="rounded-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
+            <a key={href} href={href} className="rounded-sm text-muted-foreground transition-colors hover:text-foreground">
               {label}
             </a>
           ))}
         </nav>
-        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-          <Link href="/login">
-            <Button variant="ghost" size="sm">Sign in</Button>
-          </Link>
-          <Link href="/register">
-            <Button size="sm">Start free</Button>
-          </Link>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button variant="ghost" size="sm" asChild className="h-9">
+            <Link href="/login">Sign in</Link>
+          </Button>
+          <Button size="sm" asChild className="h-9">
+            <Link href="/register">Start free</Link>
+          </Button>
         </div>
       </div>
     </header>
   )
 }
 
-// ---------------------------------------------------------------------------
-// Hero
-// ---------------------------------------------------------------------------
+// ─── Hero ────────────────────────────────────────────────────────────
+// The characteristic moment of a vault is a secret being kept — and
+// handed back when you ask. The hero shows exactly that, with the real
+// item components, and lets the visitor reveal the password themselves.
 
-const CLI_DEMO = `$ cm login
-Username: alice
-Password: ••••••••
-Logged in. API key stored: cmv1_a3f9… (scope: read)
+function HeroVault() {
+  const [revealed, setRevealed] = useState(false)
+  return (
+    <div className="kawung relative overflow-hidden rounded-[1.75rem] bg-[#1E2560] p-5 [--kawung-color:rgba(217,174,85,0.16)] [--kawung-size:56px] sm:p-8">
+      <div className="mb-5 flex items-center gap-3 text-white">
+        <LogoMark className="size-10" animated tile={false} />
+        <div>
+          <p className="text-sm font-semibold">Brankas keluarga Wulandari</p>
+          <p className="text-xs text-white/60">18 items · encrypted</p>
+        </div>
+      </div>
 
-$ cm list --env prod
-  ID  LABEL                  TYPE    ENV   USERNAME
-----  ---------------------  ------  ----  --------
-   1  Production DB          server  prod  admin
-   2  Stripe Live Key        api     prod
-   3  AWS Deploy Token       api     prod  deploy-bot
+      {/* Credential card */}
+      <div className="rounded-2xl bg-card p-1 text-card-foreground shadow-2xl shadow-black/30">
+        <div className="flex items-center gap-3 px-4 pb-3 pt-4">
+          <ItemTile icon={Landmark} tone="jade" />
+          <div className="min-w-0 flex-1">
+            <p className="font-bold">BCA KlikPay</p>
+            <p className="truncate text-xs text-muted-foreground">klikbca.com</p>
+          </div>
+          <StatusPill tone="success">Strong</StatusPill>
+        </div>
+        <div className="divide-y rounded-xl border bg-background/60">
+          <div className="flex items-center justify-between gap-3 px-4 py-3">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-muted-foreground">Username</p>
+              <p className="mt-0.5 text-sm font-semibold">sariwulan</p>
+            </div>
+            <Copy className="size-4 text-muted-foreground" aria-hidden="true" />
+          </div>
+          <div className="flex items-center justify-between gap-3 px-4 py-3">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-muted-foreground">Password</p>
+              <p className="mt-0.5 min-h-6 text-[0.9375rem]" aria-live="polite">
+                <SecretText value="Bca#2024!keluarga" revealed={revealed} />
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setRevealed((r) => !r)}
+              aria-pressed={revealed}
+              className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold transition-colors hover:bg-accent"
+            >
+              {revealed ? <EyeOff className="size-3.5" aria-hidden="true" /> : <Eye className="size-3.5" aria-hidden="true" />}
+              {revealed ? 'Hide' : 'Show'}
+            </button>
+          </div>
+        </div>
+      </div>
 
-$ cm get "Production DB"
-hunter2
-
-$ cm expiring --days 14
-Credentials expiring within 14 days:
-   2  Stripe Live Key        expires: 2026-03-20`
-
-const HERO_PROOF = [
-  'No credit card required',
-  '100 credentials free forever',
-  'Open API',
-]
+      {/* Two quieter items underneath */}
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <div className="flex items-center gap-3 rounded-xl bg-white/[0.08] p-3 text-white">
+          <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-white/10">
+            <IdCard className="size-4" aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold">KTP — Sari</p>
+            <p className="truncate font-mono text-[0.6875rem] text-white/60">ktp-sari.pdf · 1.2&nbsp;MB</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 rounded-xl bg-white/[0.08] p-3 text-white">
+          <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#D9AE55]/20">
+            <Clock className="size-4 text-[#EBC97E]" aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold">Stripe live key</p>
+            <p className="truncate text-[0.6875rem] text-white/60">Expires in 9 days</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function Hero() {
   return (
-    <section className="relative overflow-hidden py-16 sm:py-20 lg:py-28">
-      {/* subtle background grid */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 opacity-[0.03]"
-        style={{
-          backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 39px,currentColor 39px,currentColor 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,currentColor 39px,currentColor 40px)',
-        }}
-      />
-
-      <div className={`${CONTAINER} relative`}>
-        <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-12">
-          {/* Left — copy */}
-          <div className="min-w-0 space-y-6">
-            <Badge variant="outline" className="gap-1.5">
-              <Star className="h-3 w-3 fill-primary text-primary" aria-hidden="true" />
-              End-to-end encrypted · Free to start
-            </Badge>
-
-            <h1 className="text-balance text-4xl font-bold leading-[1.1] tracking-tight sm:text-5xl">
-              Pusaka<br />
-              <span className="text-primary">built for developers</span>
-            </h1>
-
-            <p className="max-w-lg text-base leading-relaxed text-muted-foreground sm:text-lg">
-              Store secrets with environment labels, track expiry, share vaults with your team,
-              and inject credentials in CI/CD — all from a single encrypted vault.
-            </p>
-
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <Link href="/register" className="sm:w-auto">
-                <Button size="lg" className="w-full gap-2 sm:w-auto">
-                  Start free <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                </Button>
-              </Link>
-              <a href="#how-it-works" className="sm:w-auto">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                  See how it works
-                </Button>
-              </a>
-            </div>
-
-            <ul className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-foreground">
-              {HERO_PROOF.map((item) => (
-                <li key={item} className="flex items-center gap-1.5">
-                  <Check className="h-3.5 w-3.5 shrink-0 text-primary" aria-hidden="true" />
-                  {item}
-                </li>
-              ))}
-            </ul>
+    <section className="relative overflow-hidden pb-20 pt-12 sm:pb-24 sm:pt-16 lg:pb-28 lg:pt-20">
+      <div className={`${CONTAINER} grid items-center gap-12 lg:grid-cols-[1.05fr_1fr] lg:gap-16`}>
+        <div className="min-w-0">
+          <p className="mb-6 inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1 text-[0.8125rem] font-medium text-muted-foreground">
+            <span className="size-1.5 rounded-full bg-brass" aria-hidden="true" />
+            Brankas digital keluarga Indonesia
+          </p>
+          <h1 className="text-[2.75rem] font-extrabold leading-[1.02] tracking-[-0.04em] text-balance sm:text-6xl lg:text-[4.25rem]" lang="id">
+            Simpan dengan tenang. Jaga dengan bangga.
+          </h1>
+          <p className="mt-6 max-w-xl text-pretty text-lg leading-relaxed text-muted-foreground">
+            Pusaka keeps the passwords, private notes and documents your family and team can’t afford to lose —
+            encrypted, organised, and there when you need them.
+          </p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <Button size="lg" asChild className="sm:w-auto">
+              <Link href="/register">Create your vault</Link>
+            </Button>
+            <Button size="lg" variant="outline" asChild className="sm:w-auto">
+              <a href="#keep">See what it keeps</a>
+            </Button>
           </div>
-
-          {/* Right — terminal demo. Deliberately dark in both themes: it is
-              terminal chrome, not a surface, so it keeps its own palette. */}
-          <div className="min-w-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 shadow-xl">
-            <div className="flex items-center gap-1.5 border-b border-zinc-800 bg-zinc-900 px-4 py-3">
-              <span className="h-3 w-3 rounded-full bg-zinc-600" />
-              <span className="h-3 w-3 rounded-full bg-zinc-700" />
-              <span className="h-3 w-3 rounded-full bg-zinc-700" />
-              <span className="ml-2 font-mono text-xs text-zinc-400">terminal</span>
-            </div>
-            <pre className="overflow-x-auto whitespace-pre p-4 font-mono text-xs leading-relaxed text-emerald-300 sm:p-5">
-              {CLI_DEMO}
-            </pre>
-          </div>
+          <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+            {['Free for up to 100 credentials', 'No card needed', 'English & Bahasa Indonesia'].map((item) => (
+              <li key={item} className="flex items-center gap-1.5">
+                <Check className="size-4 shrink-0 text-success" aria-hidden="true" />
+                {item}
+              </li>
+            ))}
+          </ul>
         </div>
+        <HeroVault />
       </div>
     </section>
   )
 }
 
-// ---------------------------------------------------------------------------
-// Trust bar
-// ---------------------------------------------------------------------------
+// ─── What you keep ───────────────────────────────────────────────────
 
-function TrustBar() {
-  const items = [
-    { icon: Lock, label: 'PBKDF2 + Fernet encryption' },
-    { icon: Key, label: 'Per-user vault keys' },
-    { icon: Globe, label: 'Environment-aware (dev/staging/prod)' },
-    { icon: GitBranch, label: 'CI/CD credential injection' },
-    { icon: Clock, label: 'Expiry tracking & alerts' },
-  ]
+const KEEPS = [
+  {
+    icon: KeyRound,
+    tone: 'indigo' as const,
+    title: 'Passwords and logins',
+    body: 'Bank, email, marketplace, the family Wi-Fi. Generate strong passwords, spot ones you reuse, and copy with a clipboard that clears itself after 30 seconds.',
+    examples: ['BCA KlikPay', 'Gmail', 'Tokopedia', 'Wi-Fi rumah'],
+  },
+  {
+    icon: StickyNote,
+    tone: 'brass' as const,
+    title: 'Secure notes',
+    body: 'The things that don’t fit a password field: insurance policy numbers, recovery codes, a server’s SSH key — or Nenek’s rendang recipe.',
+    examples: ['Nomor polis', 'Recovery codes', 'SSH keys'],
+  },
+  {
+    icon: FolderArchive,
+    tone: 'jade' as const,
+    title: 'Important documents',
+    body: 'Scans of KTP, passport, ijazah and policies, encrypted and searchable by type — with expiry dates so a renewal never sneaks up on you.',
+    examples: ['KTP', 'Paspor', 'Ijazah', 'Polis asuransi'],
+  },
+]
+
+function Keep() {
   return (
-    <section className="border-y bg-muted/40 py-6">
-      <div className={CONTAINER}>
-        <ul className="flex flex-wrap justify-center gap-x-6 gap-y-3 sm:gap-x-8">
-          {items.map(({ icon: Icon, label }) => (
-            <li key={label} className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-              {label}
+    <section id="keep" className={cn(SECTION, 'border-t')}>
+      <div className={`${CONTAINER} grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20`}>
+        <div className="lg:sticky lg:top-28 lg:self-start">
+          <h2 className="text-3xl font-extrabold tracking-[-0.03em] text-balance sm:text-4xl">
+            One vault for the things that matter.
+          </h2>
+          <p className="mt-4 max-w-md text-pretty text-muted-foreground">
+            A pusaka is an heirloom — something kept with care and handed on. Your digital life deserves the same.
+          </p>
+        </div>
+        <ul className="divide-y rounded-2xl border bg-card">
+          {KEEPS.map(({ icon, tone, title, body, examples }) => (
+            <li key={title} className="flex gap-5 p-6 sm:p-8">
+              <ItemTile icon={icon} tone={tone} size="lg" />
+              <div className="min-w-0 space-y-3">
+                <h3 className="text-lg font-bold tracking-[-0.01em]">{title}</h3>
+                <p className="max-w-prose text-pretty text-[0.9375rem] leading-relaxed text-muted-foreground">{body}</p>
+                <ul className="flex flex-wrap gap-1.5" aria-label="Examples">
+                  {examples.map((e) => (
+                    <li key={e} className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">{e}</li>
+                  ))}
+                </ul>
+              </div>
             </li>
           ))}
         </ul>
@@ -200,146 +236,151 @@ function TrustBar() {
   )
 }
 
-// ---------------------------------------------------------------------------
-// Features
-// ---------------------------------------------------------------------------
+// ─── Sharing ─────────────────────────────────────────────────────────
 
-/**
- * Icon chips rotate through the three palette accents rather than a
- * six-colour rainbow, so the grid stays calm and re-themes with the tokens.
- */
-const ACCENTS = {
-  sage: 'bg-sage/10 text-sage',
-  mist: 'bg-mist/10 text-mist',
-  clay: 'bg-clay/10 text-clay',
-} as const
-
-const FEATURES = [
-  {
-    icon: Lock,
-    title: 'Zero-knowledge encryption',
-    description:
-      'Your vault is encrypted with a key derived from your password using PBKDF2 (600k iterations). The server never sees your plaintext credentials — not even for support.',
-    accent: ACCENTS.sage,
-  },
-  {
-    icon: Terminal,
-    title: 'Developer-native CLI',
-    description:
-      'The `cm` CLI lets you inject secrets into any script or CI pipeline. `cm get "DB_PASSWORD"` pipes clean output with no trailing newline — ready for shell substitution.',
-    accent: ACCENTS.mist,
-  },
-  {
-    icon: Globe,
-    title: 'Environment labels',
-    description:
-      'Tag every credential with dev, staging, prod, or global. Filter by environment in the UI or `cm list --env prod`. Know exactly what runs where.',
-    accent: ACCENTS.clay,
-  },
-  {
-    icon: Users,
-    title: 'Team vaults & RBAC',
-    description:
-      'Create shared vaults for your team with fine-grained roles: owner, admin, member, viewer. Credentials are re-encrypted with a shared vault key — no individual key sharing.',
-    accent: ACCENTS.sage,
-  },
-  {
-    icon: Clock,
-    title: 'Expiry tracking',
-    description:
-      'Set an expiry date on API keys, certificates, and tokens. Get warned 14 days out. Run `cm expiring --days 30` in your alerting pipeline.',
-    accent: ACCENTS.mist,
-  },
-  {
-    icon: Key,
-    title: 'Scoped API keys',
-    description:
-      'Generate read-only or read-write API keys for CI/CD. Keys use SHA-256 hashing — only the prefix is stored. Revoke instantly from the web UI.',
-    accent: ACCENTS.clay,
-  },
+const ROLES = [
+  { name: 'Ibu Sari', role: 'Owner', icon: Crown, note: 'Manages the vault and its members', tone: 'brass' as const },
+  { name: 'Pak Budi', role: 'Admin', icon: Shield, note: 'Adds and removes shared items', tone: 'indigo' as const },
+  { name: 'Dimas', role: 'Member', icon: User, note: 'Uses what is shared with him', tone: 'jade' as const },
+  { name: 'Akuntan keluarga', role: 'Viewer', icon: Eye, note: 'Can see, cannot change', tone: 'slate' as const },
 ]
 
-function SectionHeading({ title, lead }: { title: string; lead?: string }) {
+function Share() {
   return (
-    <div className="mx-auto max-w-2xl space-y-3 text-center">
-      <h2 className="text-balance text-2xl font-bold tracking-tight sm:text-3xl">{title}</h2>
-      {lead && <p className="text-pretty text-base text-muted-foreground sm:text-lg">{lead}</p>}
-    </div>
-  )
-}
-
-function Features() {
-  return (
-    <section id="features" className={SECTION}>
-      <div className={`${CONTAINER} space-y-10 sm:space-y-12`}>
-        <SectionHeading
-          title="Built for the way developers actually work"
-          lead="Not another generic password manager — every feature is designed for dev team workflows."
-        />
-        <div className="grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
-          {FEATURES.map(({ icon: Icon, title, description, accent }) => (
-            <div
-              key={title}
-              className="space-y-4 rounded-xl border bg-card p-6 transition-shadow hover:shadow-md"
-            >
-              <div className={`inline-flex rounded-lg p-2.5 ${accent}`}>
-                <Icon className="h-5 w-5" aria-hidden="true" />
+    <section id="share" className={cn(SECTION, 'bg-card/60 border-y')}>
+      <div className={`${CONTAINER} grid items-center gap-12 lg:grid-cols-2 lg:gap-20`}>
+        <div className="order-2 lg:order-1">
+          <div className="rounded-2xl border bg-card p-2">
+            <div className="flex items-center justify-between gap-3 px-4 py-3">
+              <div className="flex items-center gap-3">
+                <ItemTile icon={Users} tone="indigo" size="sm" />
+                <p className="font-semibold">Rekening keluarga</p>
               </div>
-              <div className="space-y-1">
-                <h3 className="font-semibold">{title}</h3>
-                <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>
-              </div>
+              <span className="text-xs text-muted-foreground">4 members</span>
             </div>
-          ))}
+            <ul className="divide-y rounded-xl border bg-background/60">
+              {ROLES.map(({ name, role, icon: Icon, note, tone }) => (
+                <li key={name} className="flex items-center gap-3 px-4 py-3">
+                  <ItemTile icon={Icon} tone={tone} size="sm" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">{name}</p>
+                    <p className="truncate text-xs text-muted-foreground">{note}</p>
+                  </div>
+                  <span className="shrink-0 rounded-md bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground">{role}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        <div className="order-1 lg:order-2">
+          <h2 className="text-3xl font-extrabold tracking-[-0.03em] text-balance sm:text-4xl">
+            Share access, not passwords in WhatsApp.
+          </h2>
+          <p className="mt-4 max-w-lg text-pretty text-muted-foreground">
+            Create a shared vault for the household or the team, invite people by email and give each of them a role.
+            When someone no longer needs access, remove them — nothing was ever pasted into a chat.
+          </p>
+          <ul className="mt-8 space-y-3 text-[0.9375rem]">
+            {[
+              'Four roles: owner, admin, member and viewer',
+              'Invitations by email, accepted with one link',
+              'Every view, change and export recorded in the activity log',
+            ].map((t) => (
+              <li key={t} className="flex gap-3">
+                <Check className="mt-0.5 size-5 shrink-0 text-success" aria-hidden="true" />
+                {t}
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </section>
   )
 }
 
-// ---------------------------------------------------------------------------
-// How it works
-// ---------------------------------------------------------------------------
+// ─── For developers ──────────────────────────────────────────────────
+
+const CLI_DEMO = `$ cm login
+Username: sari
+Password: ••••••••
+Logged in. API key stored (scope: read)
+
+$ cm list --env prod
+  ID  LABEL              TYPE    ENV   USERNAME
+   4  Production DB      server  prod  admin
+   5  Stripe Live Key    api     prod
+
+$ export DB_PASS=$(cm get "Production DB")
+
+$ cm expiring --days 14
+   5  Stripe Live Key    expires: 2026-11-06`
+
+const DEV_FEATURES = [
+  { icon: Globe, title: 'Environment labels', body: 'Tag each secret dev, staging, prod or global and filter by it in the app or the CLI.' },
+  { icon: Clock, title: 'Expiry tracking', body: 'Set dates on keys and certificates; Pusaka warns you 14 days ahead.' },
+  { icon: KeyRound, title: 'Scoped API keys', body: 'Read-only or read-write keys for CI. Only a hash is stored; revoke any time.' },
+  { icon: Terminal, title: 'Pipe-friendly CLI', body: '`cm get` prints the bare value — ready for shell substitution in scripts.' },
+]
+
+function Developers() {
+  return (
+    <section id="developers" className="kawung kawung-fade-b bg-[#141A3D] py-20 text-white [--kawung-color:rgba(217,174,85,0.08)] [--kawung-size:56px] sm:py-24 lg:py-28 dark:bg-[#0A0D1E]">
+      <div className={`${CONTAINER} grid items-center gap-12 lg:grid-cols-[1fr_1.1fr] lg:gap-16`}>
+        <div>
+          <p className="mb-4 inline-flex items-center gap-2 text-sm font-semibold text-[#EBC97E]">
+            <Server className="size-4" aria-hidden="true" />
+            Also built for developers
+          </p>
+          <h2 className="text-3xl font-extrabold tracking-[-0.03em] text-balance sm:text-4xl">
+            The same vault, in your terminal and your pipeline.
+          </h2>
+          <dl className="mt-10 grid gap-x-8 gap-y-7 sm:grid-cols-2">
+            {DEV_FEATURES.map(({ icon: Icon, title, body }) => (
+              <div key={title}>
+                <dt className="flex items-center gap-2 font-semibold">
+                  <Icon className="size-4 text-[#EBC97E]" aria-hidden="true" />
+                  {title}
+                </dt>
+                <dd className="mt-1.5 text-sm leading-relaxed text-white/70">{body}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+        <div className="min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-[#0B0E22] shadow-2xl shadow-black/40">
+          <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3">
+            <span className="size-2.5 rounded-full bg-white/20" />
+            <span className="size-2.5 rounded-full bg-white/15" />
+            <span className="size-2.5 rounded-full bg-white/10" />
+            <span className="ml-2 font-mono text-xs text-white/50">~/projects/toko</span>
+          </div>
+          <pre className="overflow-x-auto p-5 font-mono text-[0.8125rem] leading-relaxed text-[#C9D0FF]" translate="no">
+            {CLI_DEMO}
+          </pre>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ─── How it works (a real sequence, so it is numbered) ────────────────
 
 const STEPS = [
-  {
-    step: '01',
-    title: 'Store once',
-    description: 'Add credentials in the web UI or via the CLI. Tag with environment, set expiry, mark favorites.',
-    code: 'cm set "DB_PASSWORD" s3cr3t --env prod --type server',
-  },
-  {
-    step: '02',
-    title: 'Access anywhere',
-    description: 'Pull secrets in CI scripts, Docker entrypoints, or shell sessions. Pipe-friendly with no trailing newline.',
-    code: 'export DB_PASS=$(cm get "DB_PASSWORD")',
-  },
-  {
-    step: '03',
-    title: 'Share with your team',
-    description: 'Invite teammates to an org, create shared vaults, and control access with roles. Everyone gets their own encrypted view.',
-    code: 'cm login --scope read\n# → saves scoped API key to ~/.cm/config.json',
-  },
+  { title: 'Create your vault', body: 'Sign up with a strong password. Pusaka generates a vault key just for you and locks it with that password.' },
+  { title: 'Add what matters', body: 'Save logins, write secure notes and upload documents. Tag them, star favorites, set expiry dates.' },
+  { title: 'Share when you’re ready', body: 'Invite family or teammates into a shared vault and give each of them a role.' },
 ]
 
 function HowItWorks() {
   return (
-    <section id="how-it-works" className={`${SECTION} bg-muted/30`}>
-      <div className={`${CONTAINER} space-y-10 sm:space-y-12`}>
-        <SectionHeading title="Up and running in minutes" lead="Install once, use everywhere." />
-        <ol className="grid gap-8 lg:grid-cols-3">
-          {/* min-w-0: grid items default to min-width:auto, which lets the
-              long <pre> below push the whole track past the viewport. */}
-          {STEPS.map(({ step, title, description, code }) => (
-            <li key={step} className="min-w-0 space-y-4">
-              <div className="flex items-center gap-3">
-                <span className="font-mono text-4xl font-bold text-primary/25">{step}</span>
-                <h3 className="text-lg font-semibold">{title}</h3>
-              </div>
-              <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>
-              <pre className="overflow-x-auto whitespace-pre rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3 font-mono text-xs leading-relaxed text-emerald-300">
-                {code}
-              </pre>
+    <section className={SECTION}>
+      <div className={CONTAINER}>
+        <h2 className="max-w-2xl text-3xl font-extrabold tracking-[-0.03em] text-balance sm:text-4xl">Ready in a few minutes.</h2>
+        <ol className="mt-12 grid gap-10 md:grid-cols-3 md:gap-8">
+          {STEPS.map(({ title, body }, i) => (
+            <li key={title} className="border-t-2 border-primary pt-5">
+              <p className="text-sm font-bold text-primary tabular">Step {i + 1}</p>
+              <h3 className="mt-2 text-lg font-bold">{title}</h3>
+              <p className="mt-2 text-pretty text-[0.9375rem] leading-relaxed text-muted-foreground">{body}</p>
             </li>
           ))}
         </ol>
@@ -348,193 +389,169 @@ function HowItWorks() {
   )
 }
 
-// ---------------------------------------------------------------------------
-// Pricing
-// ---------------------------------------------------------------------------
+// ─── Security ────────────────────────────────────────────────────────
+
+const SECURITY = [
+  { term: 'A key per person', detail: 'Every account gets its own random vault key. It is locked with a key derived from your password using PBKDF2-SHA256 at 600,000 iterations.' },
+  { term: 'Encrypted before storage', detail: 'Passwords, secret keys, notes and documents are encrypted with Fernet (AES) before they reach the database.' },
+  { term: 'Sessions you can’t steal from JavaScript', detail: 'Sign-in tokens live in httpOnly cookies, and account passwords are hashed with bcrypt.' },
+  { term: 'Exports without secrets', detail: 'CSV exports include labels and usernames, never passwords or secret keys.' },
+]
+
+function Security() {
+  return (
+    <section className={cn(SECTION, 'border-t')}>
+      <div className={`${CONTAINER} grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20`}>
+        <div>
+          <span className="inline-flex size-12 items-center justify-center rounded-xl bg-accent text-primary">
+            <Lock className="size-6" aria-hidden="true" />
+          </span>
+          <h2 className="mt-5 text-3xl font-extrabold tracking-[-0.03em] text-balance sm:text-4xl">How your vault is protected.</h2>
+          <p className="mt-4 max-w-md text-pretty text-muted-foreground">Plainly stated, so you can judge it yourself.</p>
+        </div>
+        <dl className="grid gap-x-10 gap-y-8 sm:grid-cols-2">
+          {SECURITY.map(({ term, detail }) => (
+            <div key={term}>
+              <dt className="font-bold">{term}</dt>
+              <dd className="mt-2 text-pretty text-[0.9375rem] leading-relaxed text-muted-foreground">{detail}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </section>
+  )
+}
+
+// ─── Pricing ─────────────────────────────────────────────────────────
 
 const PLANS = [
   {
     name: 'Free',
     price: '$0',
     period: 'forever',
-    description: 'For solo developers getting started.',
-    features: [
-      '100 credentials',
-      '1 user',
-      'API key access',
-      'CLI tool',
-      '30-day activity log',
-    ],
+    description: 'For one person getting organised.',
+    features: ['100 credentials', 'Secure notes and documents', 'CLI and API keys', '30-day activity log'],
     cta: 'Start free',
-    href: '/register',
-    variant: 'outline' as const,
   },
   {
     name: 'Pro',
     price: '$6',
-    period: '/month',
-    description: 'For power users who need unlimited storage.',
-    features: [
-      'Unlimited credentials',
-      '1 user',
-      'Full activity log',
-      'Duplicate password detection',
-      'Priority support',
-    ],
-    cta: 'Upgrade to Pro',
-    href: '/register',
-    variant: 'default' as const,
+    period: 'per month',
+    description: 'For when your vault outgrows the free plan.',
+    features: ['Unlimited credentials', 'Full activity log', 'Reused-password detection', 'Priority support'],
+    cta: 'Start with Pro',
     highlight: true,
   },
   {
     name: 'Team',
     price: '$8',
-    period: '/user/month',
-    description: 'For teams that need shared vaults.',
-    features: [
-      'Everything in Pro',
-      'Up to 25 users',
-      'Shared vaults',
-      'RBAC roles (owner/admin/member/viewer)',
-      'Audit trail',
-    ],
-    cta: 'Start team trial',
-    href: '/register',
-    variant: 'outline' as const,
+    period: 'per user / month',
+    description: 'For households and teams that share.',
+    features: ['Everything in Pro', 'Up to 25 people', 'Shared vaults', 'Owner, admin, member and viewer roles'],
+    cta: 'Start a team vault',
   },
 ]
 
 function Pricing() {
   return (
-    <section id="pricing" className={SECTION}>
-      <div className={`${CONTAINER} space-y-10 sm:space-y-12`}>
-        <SectionHeading
-          title="Simple, transparent pricing"
-          lead="Start free. Upgrade when your team does."
-        />
-        <div className="mx-auto grid max-w-5xl gap-5 sm:gap-6 lg:grid-cols-3">
+    <section id="pricing" className={cn(SECTION, 'bg-card/60 border-y')}>
+      <div className={CONTAINER}>
+        <div className="max-w-2xl">
+          <h2 className="text-3xl font-extrabold tracking-[-0.03em] text-balance sm:text-4xl">Start free. Upgrade when you need to.</h2>
+          <p className="mt-4 text-muted-foreground">Every plan includes encryption, the CLI and the activity log. Cancel any time.</p>
+        </div>
+        <div className="mt-12 grid gap-5 lg:grid-cols-3">
           {PLANS.map((plan) => (
             <div
               key={plan.name}
-              className={`flex flex-col gap-6 rounded-xl border bg-card p-6 sm:p-7 ${
-                plan.highlight ? 'border-primary shadow-lg ring-1 ring-primary/20' : ''
-              }`}
+              className={cn(
+                'relative flex flex-col rounded-2xl border bg-card p-7',
+                plan.highlight && 'border-primary ring-1 ring-primary',
+              )}
             >
-              <Badge className={`self-start text-[11px] ${plan.highlight ? '' : 'invisible'}`}>
-                Most popular
-              </Badge>
-              <div>
-                <p className="text-lg font-semibold">{plan.name}</p>
-                <div className="mt-1 flex items-baseline gap-1">
-                  <span className="text-3xl font-bold tracking-tight">{plan.price}</span>
-                  <span className="text-sm text-muted-foreground">{plan.period}</span>
-                </div>
-                <p className="mt-2 text-sm text-muted-foreground">{plan.description}</p>
-              </div>
-              <ul className="flex-1 space-y-2">
+              {plan.highlight && (
+                <span className="absolute -top-3 left-7 rounded-full bg-primary px-2.5 py-0.5 text-xs font-bold text-primary-foreground">
+                  Recommended
+                </span>
+              )}
+              <p className="text-lg font-bold">{plan.name}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{plan.description}</p>
+              <p className="mt-6 flex items-baseline gap-2">
+                <span className="text-4xl font-extrabold tracking-[-0.03em] tabular">{plan.price}</span>
+                <span className="text-sm text-muted-foreground">{plan.period}</span>
+              </p>
+              <ul className="mt-6 flex-1 space-y-2.5 text-[0.9375rem]">
                 {plan.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2 text-sm">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+                  <li key={f} className="flex gap-2.5">
+                    <Check className="mt-0.5 size-4 shrink-0 text-success" aria-hidden="true" />
                     {f}
                   </li>
                 ))}
               </ul>
-              <Link href={plan.href} className="block">
-                <Button variant={plan.variant} className="w-full">{plan.cta}</Button>
-              </Link>
+              <Button asChild variant={plan.highlight ? 'default' : 'outline'} className="mt-8 w-full">
+                <Link href="/register">{plan.cta}</Link>
+              </Button>
             </div>
           ))}
         </div>
-        <p className="mx-auto max-w-2xl text-center text-sm text-muted-foreground">
-          All plans include end-to-end encryption, CLI access, and API key auth. Cancel any time.
-        </p>
       </div>
     </section>
   )
 }
 
-// ---------------------------------------------------------------------------
-// FAQ
-// ---------------------------------------------------------------------------
+// ─── FAQ ─────────────────────────────────────────────────────────────
 
 const FAQS = [
   {
-    q: 'How does the encryption work?',
-    a: 'Each user gets a unique random vault key. That key is encrypted with a wrapping key derived from your password using PBKDF2 (600,000 iterations, SHA-256). The server stores only the encrypted vault key — your plaintext credentials are never visible to us, even if our database is breached.',
+    q: 'Can Pusaka staff read my passwords?',
+    a: 'Your items are encrypted with your personal vault key, which is locked with your password. The server unlocks it while you are signed in so it can show you your items. To support password reset, a recovery copy of the key is also kept, encrypted with the server’s secret — so Pusaka is not a zero-knowledge system, and we don’t claim it is.',
   },
   {
     q: 'What happens if I forget my password?',
-    a: 'We support password reset via email. When you reset your password, we re-derive the wrapping key and re-encrypt your vault key — your vault data is preserved. This requires the recovery-encrypted vault key stored on the server.',
+    a: 'Reset it by email. Your vault key is recovered and re-locked with your new password, so nothing in your vault is lost.',
   },
   {
-    q: 'How do shared team vaults work?',
-    a: 'Shared vaults use a server-derived key (HMAC-SHA256 of the server secret and vault ID). When you share a credential, it is decrypted with your personal key and re-encrypted with the shared vault key. All vault members decrypt with the same shared key. This is a server-assisted sharing model.',
+    q: 'How do shared vaults work?',
+    a: 'When you add an item to a shared vault, a copy is encrypted with that vault’s own key. Everyone you invite reads that copy according to their role. Removing someone ends their access.',
   },
   {
     q: 'Can I self-host Pusaka?',
-    a: 'Yes — the backend is a standard FastAPI + PostgreSQL app. All configuration is via environment variables. The Docker setup is straightforward. Self-hosted instances are fully supported and the code is open.',
+    a: 'Yes. The backend is a FastAPI app that runs on PostgreSQL and is configured with environment variables; the web app is a Next.js front end that talks to it over a REST API.',
   },
   {
     q: 'How do API keys work for CI/CD?',
-    a: 'API keys use the format cmv1_<64-hex>. Only the SHA-256 hash is stored on the server. You create a read or write scoped key from the web UI, store it as a CI secret, and use it as a Bearer token: Authorization: Bearer cmv1_...',
+    a: 'Create a read or read-write key in Settings → Security, store it as a CI secret, and send it as a Bearer token. Only a SHA-256 hash of the key is stored, and you can revoke it instantly.',
   },
   {
-    q: 'Is there a rate limit on the API?',
-    a: 'Login is rate-limited to 10 attempts per minute per IP. Registration is limited to 5 per hour. All other endpoints are unthrottled for authenticated requests.',
+    q: 'Is there a rate limit?',
+    a: 'Sign-in is limited to 10 attempts per minute per IP and registration to 5 per hour. Other authenticated requests are not throttled.',
   },
 ]
 
 function FAQ() {
-  const [open, setOpen] = useState<number | null>(null)
-
   return (
-    <section id="faq" className={`${SECTION} bg-muted/30`}>
-      <div className={`${CONTAINER} space-y-10`}>
-        <SectionHeading title="Frequently asked questions" />
-        <div className="mx-auto max-w-2xl space-y-2">
-          {FAQS.map(({ q, a }, i) => {
-            const isOpen = open === i
-            return (
-              <div key={q} className="overflow-hidden rounded-lg border bg-background">
-                <h3>
-                  <button
-                    type="button"
-                    id={`faq-trigger-${i}`}
-                    aria-expanded={isOpen}
-                    aria-controls={`faq-panel-${i}`}
-                    className="flex min-h-12 w-full items-center justify-between gap-4 px-5 py-4 text-left text-sm font-medium transition-colors hover:bg-muted/50"
-                    onClick={() => setOpen(isOpen ? null : i)}
-                  >
-                    {q}
-                    {isOpen
-                      ? <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-                      : <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />}
-                  </button>
-                </h3>
-                {isOpen && (
-                  <div
-                    id={`faq-panel-${i}`}
-                    role="region"
-                    aria-labelledby={`faq-trigger-${i}`}
-                    className="border-t px-5 pb-4 pt-4 text-sm leading-relaxed text-muted-foreground"
-                  >
-                    {a}
-                  </div>
-                )}
-              </div>
-            )
-          })}
+    <section id="faq" className={SECTION}>
+      <div className={`${CONTAINER} grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20`}>
+        <h2 className="text-3xl font-extrabold tracking-[-0.03em] text-balance sm:text-4xl">Questions people ask first.</h2>
+        <div className="divide-y rounded-2xl border bg-card">
+          {FAQS.map(({ q, a }) => (
+            <details key={q} className="group px-6 [&_summary::-webkit-details-marker]:hidden">
+              <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-4 text-left font-semibold">
+                {q}
+                <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden="true" />
+              </summary>
+              <p className="pb-5 text-pretty text-[0.9375rem] leading-relaxed text-muted-foreground">{a}</p>
+            </details>
+          ))}
         </div>
       </div>
     </section>
   )
 }
 
-// ---------------------------------------------------------------------------
-// Waitlist / CTA
-// ---------------------------------------------------------------------------
+// ─── Closing CTA + waitlist ──────────────────────────────────────────
 
-function WaitlistCTA() {
+function ClosingCTA() {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -550,75 +567,52 @@ function WaitlistCTA() {
         body: JSON.stringify({ email }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data?.detail ?? 'Something went wrong')
+      if (!res.ok) throw new Error(data?.detail ?? 'That didn’t work. Check the address and try again.')
       setSubmitted(true)
       toast.success(data.detail)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to join waitlist')
+      toast.error(err instanceof Error ? err.message : 'Could not join the list. Try again in a moment.')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <section className={SECTION}>
-      <div className={`${CONTAINER} text-center`}>
-        <div className="mx-auto max-w-2xl space-y-6">
-          <div className="inline-flex rounded-full bg-primary/10 p-3">
-            <Zap className="h-6 w-6 text-primary" aria-hidden="true" />
-          </div>
-          <h2 className="text-balance text-2xl font-bold tracking-tight sm:text-3xl">
-            Ready to secure your secrets?
-          </h2>
-          <p className="text-pretty text-base text-muted-foreground sm:text-lg">
-            Start free today — no credit card required. Or join the waitlist for early access to new features.
-          </p>
-          <div className="flex justify-center">
-            <Link href="/register" className="w-full sm:w-auto">
-              <Button size="lg" className="w-full gap-2 sm:w-auto">
-                Create free account <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </Button>
-            </Link>
-          </div>
-          <div className="relative">
-            <div aria-hidden="true" className="absolute inset-0 flex items-center">
-              <div className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center">
-              <span className="bg-background px-3 text-xs text-muted-foreground">
-                or join the waitlist for updates
-              </span>
-            </div>
-          </div>
-          <div aria-live="polite">
+    <section className="px-5 pb-20 sm:px-6 sm:pb-24 lg:px-8">
+      <div className="kawung kawung-fade-r mx-auto max-w-6xl overflow-hidden rounded-[1.75rem] bg-[#1E2560] px-6 py-14 text-white [--kawung-color:rgba(217,174,85,0.16)] [--kawung-size:56px] sm:px-12 sm:py-16 dark:bg-[#161B45]">
+        <div className="max-w-xl">
+          <h2 className="text-3xl font-extrabold tracking-[-0.03em] text-balance sm:text-4xl">Start keeping what matters.</h2>
+          <p className="mt-4 text-pretty text-white/75">Free for up to 100 credentials, with notes and documents included. No card needed.</p>
+          <Button size="lg" asChild className="mt-8 bg-[#EBC97E] text-[#1E2560] hover:bg-[#F1D597]">
+            <Link href="/register">Create your vault</Link>
+          </Button>
+
+          <div className="mt-10 border-t border-white/15 pt-8" aria-live="polite">
+            <p className="text-sm font-semibold">Hear about new features</p>
             {submitted ? (
-              <p className="flex items-center justify-center gap-2 text-sm text-primary">
-                <Check className="h-4 w-4" aria-hidden="true" />
-                You&apos;re on the list! We&apos;ll be in touch.
+              <p className="mt-3 flex items-center gap-2 text-sm text-[#EBC97E]">
+                <Check className="size-4" aria-hidden="true" />
+                You’re on the list. We’ll write when there’s news.
               </p>
             ) : (
-              <form onSubmit={handleSubmit} className="mx-auto flex max-w-sm gap-2">
+              <form onSubmit={handleSubmit} className="mt-3 flex max-w-md gap-2">
                 <label htmlFor="waitlist-email" className="sr-only">Email address</label>
                 <Input
                   id="waitlist-email"
                   name="email"
                   type="email"
                   autoComplete="email"
+                  spellCheck={false}
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={loading}
                   required
+                  className="border-white/25 bg-white/10 text-white placeholder:text-white/50 focus-visible:border-[#EBC97E] focus-visible:ring-[#EBC97E]/30"
                 />
-                <Button type="submit" variant="outline" disabled={loading || !email} className="shrink-0">
-                  {loading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                      <span className="sr-only">Joining the waitlist</span>
-                    </>
-                  ) : (
-                    'Join'
-                  )}
+                <Button type="submit" variant="outline" disabled={loading || !email} className="shrink-0 border-white/25 bg-transparent text-white hover:bg-white/10 hover:text-white">
+                  {loading && <Loader2 className="animate-spin" aria-hidden="true" />}
+                  {loading ? 'Joining…' : 'Notify me'}
                 </Button>
               </form>
             )}
@@ -629,22 +623,18 @@ function WaitlistCTA() {
   )
 }
 
-// ---------------------------------------------------------------------------
-// Footer
-// ---------------------------------------------------------------------------
+// ─── Footer ──────────────────────────────────────────────────────────
 
 function Footer() {
   return (
     <footer className="border-t py-10">
-      <div
-        className={`${CONTAINER} flex flex-col items-center justify-between gap-4 text-sm text-muted-foreground sm:flex-row`}
-      >
-        <p className="flex items-center gap-2 text-center sm:text-left">
-          <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
-          <span>Pusaka — secure credentials for developers</span>
-        </p>
-        <nav aria-label="Footer" className="flex flex-wrap justify-center gap-x-5 gap-y-2">
-          <Link href="/register" className="rounded-sm transition-colors hover:text-foreground">Get started</Link>
+      <div className={`${CONTAINER} flex flex-col items-start justify-between gap-6 text-sm text-muted-foreground sm:flex-row sm:items-center`}>
+        <div className="flex items-center gap-3">
+          <LogoMark className="size-7" />
+          <span>Pusaka — dibuat dengan bangga di Indonesia.</span>
+        </div>
+        <nav aria-label="Footer" className="flex flex-wrap gap-x-6 gap-y-2">
+          <Link href="/register" className="rounded-sm transition-colors hover:text-foreground">Create account</Link>
           <Link href="/login" className="rounded-sm transition-colors hover:text-foreground">Sign in</Link>
           <a href="#pricing" className="rounded-sm transition-colors hover:text-foreground">Pricing</a>
           <a href="#faq" className="rounded-sm transition-colors hover:text-foreground">FAQ</a>
@@ -654,30 +644,29 @@ function Footer() {
   )
 }
 
-// ---------------------------------------------------------------------------
-// Page
-// ---------------------------------------------------------------------------
-
 export function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-primary-foreground"
       >
         Skip to content
       </a>
       <Nav />
       <main id="main">
         <Hero />
-        <TrustBar />
-        <Features />
+        <Keep />
+        <Share />
+        <Developers />
         <HowItWorks />
+        <Security />
         <Pricing />
         <FAQ />
-        <WaitlistCTA />
+        <ClosingCTA />
       </main>
       <Footer />
     </div>
   )
 }
+

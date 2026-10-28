@@ -5,23 +5,33 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Edit, Globe, Eye, EyeOff, ArrowLeft } from 'lucide-react'
+import { ExternalLink, KeyRound, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Separator } from '@/components/ui/separator'
-import { Badge } from '@/components/ui/badge'
 import { CredentialTypeBadge } from '@/components/features/credential-type-badge'
 import { FavoriteButton } from '@/components/features/favorite-button'
 import { CopyButton } from '@/components/features/copy-button'
 import { DeleteDialog } from '@/components/features/delete-dialog'
+import { PageContainer, PageHeader, Panel } from '@/components/shared/page'
+import { ItemTile } from '@/components/shared/item-tile'
+import { EmptyState } from '@/components/shared/empty-state'
+import { SecretText } from '@/components/shared/secret-text'
+import { FieldRow, RevealButton } from '@/components/shared/field-row'
+import { EnvBadge, ExpiryBadge, StatusPill, TagList } from '@/components/shared/badges'
+import { MetaList } from '@/components/shared/kbd'
 import { credentialsApi } from '@/lib/api'
-import { formatDistanceToNow } from '@/lib/utils'
+import { credentialMeta, daysUntil } from '@/lib/item-meta'
+import { passwordStrength } from '@/lib/password'
+import { formatDate, formatDistanceToNow } from '@/lib/utils'
+import { useT } from '@/lib/i18n'
+
+const STRENGTH_TONE = { Weak: 'danger', Fair: 'warning', Good: 'info', Strong: 'success' } as const
 
 export default function CredentialDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
   const qc = useQueryClient()
+  const { t, lang } = useT()
   const [showPass, setShowPass] = useState(false)
   const [showSecret, setShowSecret] = useState(false)
 
@@ -34,102 +44,165 @@ export default function CredentialDetailPage({ params }: { params: Promise<{ id:
     mutationFn: () => credentialsApi.delete(Number(id)),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['credentials'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
       toast.success('Credential deleted')
       router.push('/credentials')
     },
-    onError: () => toast.error('Delete failed'),
+    onError: () => toast.error('Could not delete. Try again in a moment.'),
   })
 
-  if (isLoading) return (
-    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-4">
-      <Skeleton className="h-8 w-48" />
-      <Skeleton className="h-64" />
-    </div>
-  )
+  if (isLoading) {
+    return (
+      <PageContainer className="space-y-6">
+        <Skeleton className="h-5 w-28" />
+        <div className="flex items-center gap-4">
+          <Skeleton className="size-14 rounded-xl" />
+          <div className="space-y-2"><Skeleton className="h-8 w-56" /><Skeleton className="h-4 w-32" /></div>
+        </div>
+        <div className="grid gap-5 lg:grid-cols-[1fr_18rem]">
+          <Skeleton className="h-72 rounded-xl" />
+          <Skeleton className="h-60 rounded-xl" />
+        </div>
+      </PageContainer>
+    )
+  }
 
-  if (!data) return <div className="p-4 sm:p-6 text-sm text-muted-foreground">Credential not found.</div>
+  if (!data) {
+    return (
+      <PageContainer>
+        <EmptyState
+          icon={KeyRound}
+          title="This credential doesn’t exist"
+          description="It may have been deleted, or the link is wrong."
+          action={<Button asChild variant="outline"><Link href="/credentials">Back to credentials</Link></Button>}
+        />
+      </PageContainer>
+    )
+  }
+
+  const meta = credentialMeta(data.type)
+  const strength = passwordStrength(data.password)
+  const days = daysUntil(data.expires_at)
 
   return (
-    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center gap-3">
-        <Link href="/credentials"><Button variant="ghost" size="icon"><ArrowLeft className="h-4 w-4" /></Button></Link>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold">{data.label}</h1>
-          <div className="flex items-center gap-2 mt-1">
-            <CredentialTypeBadge type={data.type} />
-            {data.tags?.split(',').map((t) => <Badge key={t} variant="outline" className="text-xs">{t.trim()}</Badge>)}
-          </div>
+    <PageContainer>
+      <PageHeader
+        back={{ href: '/credentials', label: t.nav.credentials }}
+        leading={<ItemTile icon={meta.icon} tone={meta.tone} size="lg" />}
+        title={data.label}
+        actions={
+          <>
+            <FavoriteButton id={data.id} kind="credential" isFavorite={data.is_favorite} queryKey={['credential', id]} className="size-10" />
+            <Button variant="outline" asChild>
+              <Link href={`/credentials/${id}/edit`}><Pencil aria-hidden="true" />{t.common.edit}</Link>
+            </Button>
+            <DeleteDialog itemName={data.label} onConfirm={() => doDelete()} isPending={deleting} />
+          </>
+        }
+      >
+        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+          <CredentialTypeBadge type={data.type} />
+          <EnvBadge env={data.env} />
+          <ExpiryBadge expiresAt={data.expires_at} />
+          <TagList tags={data.tags} />
         </div>
-        <FavoriteButton id={data.id} kind="credential" isFavorite={data.is_favorite} queryKey={['credential', id]} />
-        <Link href={`/credentials/${id}/edit`}><Button variant="outline" size="sm"><Edit className="mr-2 h-4 w-4" />Edit</Button></Link>
-        <DeleteDialog itemName={data.label} onConfirm={() => doDelete()} isPending={deleting} />
-      </div>
+      </PageHeader>
 
-      <Card>
-        <CardHeader><CardTitle className="text-base">Details</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
-          {data.website_url && (
-            <div className="flex items-center gap-2">
-              <Globe className="h-4 w-4 shrink-0 text-muted-foreground" />
-              <a href={data.website_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline truncate">{data.website_url}</a>
-            </div>
-          )}
-
-          {[
-            { label: 'Username', value: data.username },
-            { label: 'Email', value: data.email },
-          ].filter(f => f.value).map(({ label, value }) => (
-            <div key={label}>
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">{label}</p>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-mono">{value}</span>
-                <CopyButton value={value!} label={label} />
+      <div className="grid items-start gap-5 lg:grid-cols-[1fr_18rem]">
+        <div className="space-y-5">
+          <section aria-label="Sign-in details" className="divide-y overflow-hidden rounded-xl border bg-card">
+            {data.website_url && (
+              <FieldRow
+                label="Website"
+                actions={
+                  <>
+                    <CopyButton value={data.website_url} label="Website" />
+                    <Button variant="ghost" size="icon-sm" asChild className="text-muted-foreground hover:text-foreground">
+                      <a href={data.website_url} target="_blank" rel="noopener noreferrer" aria-label="Open website in a new tab">
+                        <ExternalLink aria-hidden="true" />
+                      </a>
+                    </Button>
+                  </>
+                }
+              >
+                <a href={data.website_url} target="_blank" rel="noopener noreferrer" className="block truncate font-medium text-primary hover:underline">
+                  {data.website_url}
+                </a>
+              </FieldRow>
+            )}
+            {data.username && (
+              <FieldRow label="Username" actions={<CopyButton value={data.username} label="Username" />}>
+                <span className="block truncate font-medium" translate="no">{data.username}</span>
+              </FieldRow>
+            )}
+            {data.email && (
+              <FieldRow label="Email" actions={<CopyButton value={data.email} label="Email" />}>
+                <span className="block truncate font-medium" translate="no">{data.email}</span>
+              </FieldRow>
+            )}
+            <FieldRow
+              label="Password"
+              actions={
+                <>
+                  <RevealButton shown={showPass} onToggle={() => setShowPass((s) => !s)} label="password" />
+                  <CopyButton value={data.password} label="Password" />
+                </>
+              }
+            >
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <SecretText value={data.password} revealed={showPass} className="text-base" />
+                {strength.label && <StatusPill tone={STRENGTH_TONE[strength.label]}>{strength.label}</StatusPill>}
               </div>
-            </div>
-          ))}
-
-          <Separator />
-
-          <div>
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Password</p>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-mono">{showPass ? data.password : '•'.repeat(Math.min(data.password.length, 16))}</span>
-              <Button variant="ghost" size="icon" onClick={() => setShowPass(!showPass)}>
-                {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </Button>
-              <CopyButton value={data.password} label="Password" />
-            </div>
-          </div>
-
-          {data.secret_key && (
-            <div>
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Secret Key / 2FA</p>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-mono">{showSecret ? data.secret_key : '•'.repeat(Math.min(data.secret_key.length, 16))}</span>
-                <Button variant="ghost" size="icon" onClick={() => setShowSecret(!showSecret)}>
-                  {showSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
-                <CopyButton value={data.secret_key} label="Secret key" />
-              </div>
-            </div>
-          )}
+            </FieldRow>
+            {data.secret_key && (
+              <FieldRow
+                label="Secret key or 2FA seed"
+                actions={
+                  <>
+                    <RevealButton shown={showSecret} onToggle={() => setShowSecret((s) => !s)} label="secret key" />
+                    <CopyButton value={data.secret_key} label="Secret key" />
+                  </>
+                }
+              >
+                <SecretText value={data.secret_key} revealed={showSecret} className="text-base" />
+              </FieldRow>
+            )}
+          </section>
 
           {data.note && (
-            <>
-              <Separator />
-              <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Notes</p>
-                <p className="text-sm whitespace-pre-wrap">{data.note}</p>
-              </div>
-            </>
+            <Panel title="Notes">
+              <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{data.note}</p>
+            </Panel>
           )}
-        </CardContent>
-      </Card>
+        </div>
 
-      <p className="text-xs text-muted-foreground">
-        Created {formatDistanceToNow(data.created_at)} · Updated {formatDistanceToNow(data.updated_at)}
-        {data.last_accessed && ` · Last viewed ${formatDistanceToNow(data.last_accessed)}`}
-      </p>
-    </div>
+        <aside className="space-y-5">
+          <Panel title="Details">
+            <MetaList
+              items={[
+                { label: 'Category', value: meta.label },
+                { label: 'Environment', value: <span className="capitalize">{data.env || 'global'}</span> },
+                ...(data.expires_at
+                  ? [{
+                      label: 'Expires',
+                      value: (
+                        <span className={days !== null && days < 0 ? 'text-destructive' : days !== null && days <= 14 ? 'text-warning' : undefined}>
+                          {formatDate(data.expires_at, lang)}
+                        </span>
+                      ),
+                    }]
+                  : []),
+                { label: 'Created', value: formatDate(data.created_at, lang) },
+                { label: 'Updated', value: formatDistanceToNow(data.updated_at, lang) },
+                ...(data.last_accessed ? [{ label: 'Last viewed', value: formatDistanceToNow(data.last_accessed, lang) }] : []),
+              ]}
+            />
+          </Panel>
+          <p className="px-1 text-xs leading-relaxed text-muted-foreground">
+            Copied values are cleared from your clipboard after 30 seconds.
+          </p>
+        </aside>
+      </div>
+    </PageContainer>
   )
 }
