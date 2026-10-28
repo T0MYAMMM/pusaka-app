@@ -1,78 +1,95 @@
 'use client'
 
-import Link from 'next/link'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
+import { MailCheck } from 'lucide-react'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Field, fieldAria } from '@/components/shared/form'
+import { AuthError, AuthFooter, AuthHeader, AuthLink, AuthResult, AuthSubmit } from '@/components/features/auth-ui'
 import { authApi } from '@/lib/api'
 
 const schema = z.object({
-  email: z.string().email('Enter a valid email address'),
+  email: z.string().email('Enter an email like name@example.com.'),
 })
 type FormValues = z.infer<typeof schema>
 
 export default function ForgotPasswordPage() {
   const [submitted, setSubmitted] = useState(false)
+  const [sentTo, setSentTo] = useState('')
+  const [formError, setFormError] = useState<string | null>(null)
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormValues>({
     resolver: zodResolver(schema),
   })
 
   const onSubmit = async (data: FormValues) => {
+    setFormError(null)
     try {
       await authApi.forgotPassword(data.email)
+      setSentTo(data.email)
       setSubmitted(true)
     } catch {
-      toast.error('Something went wrong. Please try again.')
+      setFormError('We couldn’t send the link just now. Check your connection and try again.')
     }
   }
 
   if (submitted) {
     return (
-      <div className="space-y-4 text-center">
-        <h1 className="text-2xl font-bold tracking-tight">Check your inbox</h1>
-        <p className="text-sm text-muted-foreground">
-          If that email is registered, you&apos;ll receive a reset link shortly.
+      <AuthResult
+        tone="success"
+        icon={MailCheck}
+        title="Check your inbox"
+        action={{ href: '/login', label: 'Back to sign in' }}
+        secondary={
+          <button
+            type="button"
+            onClick={() => setSubmitted(false)}
+            className="font-semibold text-primary underline-offset-4 hover:underline"
+          >
+            Use a different email
+          </button>
+        }
+      >
+        <p>
+          If an account uses <span className="font-semibold break-all text-foreground">{sentTo}</span>, a
+          reset link is on its way. It can take a minute; check spam if it doesn’t arrive.
         </p>
-        <Link href="/login" className="text-sm font-medium underline underline-offset-4 hover:text-foreground">
-          Back to login
-        </Link>
-      </div>
+      </AuthResult>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight">Forgot your password?</h1>
-        <p className="text-sm text-muted-foreground">
-          Enter your email and we&apos;ll send you a reset link.
-        </p>
-      </div>
+    <div className="space-y-8">
+      <AuthHeader
+        title="Reset your password"
+        description="Enter the email on your account and we’ll send you a link to choose a new password."
+      />
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" autoComplete="email" {...register('email')} />
-          {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+      {formError && <AuthError><p>{formError}</p></AuthError>}
+
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
+        <Field id="email" label="Email" error={errors.email?.message}>
+          <Input
+            {...fieldAria('email', errors.email?.message)}
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            autoCapitalize="none"
+            spellCheck={false}
+            {...register('email')}
+          />
+        </Field>
+
+        <div className="pt-1">
+          <AuthSubmit pending={isSubmitting} pendingLabel="Sending…">Send reset link</AuthSubmit>
         </div>
-
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? 'Sending…' : 'Send reset link'}
-        </Button>
       </form>
 
-      <p className="text-center text-sm text-muted-foreground">
-        Remembered it?{' '}
-        <Link href="/login" className="font-medium underline underline-offset-4 hover:text-foreground">
-          Back to login
-        </Link>
-      </p>
+      <AuthFooter>
+        Remembered it? <AuthLink href="/login">Sign in</AuthLink>
+      </AuthFooter>
     </div>
   )
 }

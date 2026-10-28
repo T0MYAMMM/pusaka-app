@@ -150,7 +150,7 @@ const translations = {
     },
     brand: {
       name: 'Pusaka',
-      tagline: 'Store with Peace. Guard with Pride.',
+      tagline: 'Store with peace. Guard with pride.',
       brankas: 'Pusaka Brankas',
       waris: 'Pusaka Waris',
     },
@@ -299,7 +299,7 @@ const translations = {
     },
     brand: {
       name: 'Pusaka',
-      tagline: 'Simpan dengan Tenang. Jaga dengan Bangga.',
+      tagline: 'Simpan dengan tenang. Jaga dengan bangga.',
       brankas: 'Pusaka Brankas',
       waris: 'Pusaka Waris',
     },

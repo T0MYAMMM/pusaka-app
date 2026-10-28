@@ -1,104 +1,113 @@
 'use client'
 
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useForm } from 'react-hook-form'
+import { useState } from 'react'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Field, PasswordInput, StrengthMeter, fieldAria } from '@/components/shared/form'
+import { AuthError, AuthFooter, AuthHeader, AuthLink, AuthSubmit } from '@/components/features/auth-ui'
 import { authApi } from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
 
 const schema = z.object({
-  first_name: z.string().min(1, 'First name is required'),
-  last_name: z.string().min(1, 'Last name is required'),
-  username: z.string().min(2, 'At least 2 characters').regex(/^[\w-]+$/, 'Letters, numbers, hyphens and underscores only'),
-  email: z.string().email('Invalid email'),
-  password: z.string().min(8, 'At least 8 characters'),
+  first_name: z.string().min(1, 'Enter your first name.'),
+  last_name: z.string().min(1, 'Enter your last name.'),
+  username: z.string().min(2, 'Use at least 2 characters.').regex(/^[\w-]+$/, 'Use only letters, numbers, hyphens and underscores.'),
+  email: z.string().email('Enter an email like name@example.com.'),
+  password: z.string().min(8, 'Use at least 8 characters.'),
   confirm: z.string(),
-}).refine((d) => d.password === d.confirm, { message: 'Passwords do not match', path: ['confirm'] })
+}).refine((d) => d.password === d.confirm, { message: 'Passwords don’t match. Retype the password above.', path: ['confirm'] })
 type FormValues = z.infer<typeof schema>
 
 export default function RegisterPage() {
   const router = useRouter()
   const setUser = useAuthStore((s) => s.setUser)
+  const [formError, setFormError] = useState<string | null>(null)
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormValues>({
+  const { register, handleSubmit, control, formState: { errors, isSubmitting } } = useForm<FormValues>({
     resolver: zodResolver(schema),
   })
+  const password = useWatch({ control, name: 'password' }) ?? ''
 
-  const onSubmit = async ({ confirm: _c, ...data }: FormValues) => {
+  const onSubmit = async ({ first_name, last_name, username, email, password }: FormValues) => {
+    setFormError(null)
     try {
-      const user = await authApi.register(data)
+      const user = await authApi.register({ first_name, last_name, username, email, password })
       setUser(user)
       router.push('/dashboard')
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Registration failed')
+      setFormError(err instanceof Error ? err.message : 'Could not create your account. Try again in a moment.')
     }
   }
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 lg:hidden">
-          <span className="font-serif text-lg font-bold tracking-wide text-primary">Pusaka</span>
-        </div>
-        <h1 className="text-2xl font-bold tracking-tight">Create your account</h1>
-        <p className="text-sm text-muted-foreground">Start managing your credentials securely</p>
-      </div>
+    <div className="space-y-8">
+      <AuthHeader
+        title="Create your account"
+        description="One vault for your passwords, notes and documents."
+      />
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {formError && <AuthError><p>{formError}</p></AuthError>}
+
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
         <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-2">
-            <Label htmlFor="first_name">First name</Label>
-            <Input id="first_name" {...register('first_name')} />
-            {errors.first_name && <p className="text-xs text-destructive">{errors.first_name.message}</p>}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="last_name">Last name</Label>
-            <Input id="last_name" {...register('last_name')} />
-            {errors.last_name && <p className="text-xs text-destructive">{errors.last_name.message}</p>}
-          </div>
+          <Field id="first_name" label="First name" error={errors.first_name?.message}>
+            <Input {...fieldAria('first_name', errors.first_name?.message)} autoComplete="given-name" {...register('first_name')} />
+          </Field>
+          <Field id="last_name" label="Last name" error={errors.last_name?.message}>
+            <Input {...fieldAria('last_name', errors.last_name?.message)} autoComplete="family-name" {...register('last_name')} />
+          </Field>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="username">Username</Label>
-          <Input id="username" autoComplete="username" {...register('username')} />
-          {errors.username && <p className="text-sm text-destructive">{errors.username.message}</p>}
-        </div>
+        <Field id="username" label="Username" error={errors.username?.message} hint="Letters, numbers, hyphens and underscores.">
+          <Input
+            {...fieldAria('username', errors.username?.message, true)}
+            autoComplete="username"
+            autoCapitalize="none"
+            spellCheck={false}
+            {...register('username')}
+          />
+        </Field>
 
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" autoComplete="email" {...register('email')} />
-          {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
-        </div>
+        <Field id="email" label="Email" error={errors.email?.message}>
+          <Input
+            {...fieldAria('email', errors.email?.message)}
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            autoCapitalize="none"
+            spellCheck={false}
+            {...register('email')}
+          />
+        </Field>
 
-        <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
-          <Input id="password" type="password" autoComplete="new-password" {...register('password')} />
-          {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
-        </div>
+        <Field id="password" label="Password" error={errors.password?.message} hint="At least 8 characters. A short sentence is easy to remember.">
+          <PasswordInput
+            {...fieldAria('password', errors.password?.message, true)}
+            autoComplete="new-password"
+            {...register('password')}
+          />
+          <StrengthMeter password={password} />
+        </Field>
 
-        <div className="space-y-2">
-          <Label htmlFor="confirm">Confirm password</Label>
-          <Input id="confirm" type="password" autoComplete="new-password" {...register('confirm')} />
-          {errors.confirm && <p className="text-sm text-destructive">{errors.confirm.message}</p>}
-        </div>
+        <Field id="confirm" label="Confirm password" error={errors.confirm?.message}>
+          <PasswordInput
+            {...fieldAria('confirm', errors.confirm?.message)}
+            autoComplete="new-password"
+            {...register('confirm')}
+          />
+        </Field>
 
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? 'Creating account…' : 'Create account'}
-        </Button>
+        <div className="pt-1">
+          <AuthSubmit pending={isSubmitting} pendingLabel="Creating account…">Create account</AuthSubmit>
+        </div>
       </form>
 
-      <p className="text-center text-sm text-muted-foreground">
-        Already have an account?{' '}
-        <Link href="/login" className="font-medium underline underline-offset-4 hover:text-foreground">
-          Sign in
-        </Link>
-      </p>
+      <AuthFooter>
+        Already have an account? <AuthLink href="/login">Sign in</AuthLink>
+      </AuthFooter>
     </div>
   )
 }
