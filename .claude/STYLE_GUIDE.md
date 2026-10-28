@@ -47,6 +47,23 @@ never raw Tailwind palette colors. The background is deliberately *not* cream.
 * The one orchestrated motion: petals open once (`.petal-open`) on the landing
   hero and auth panel. Everything else moves only in response to the user.
 
+## 4b. Nila surface and glass (landing)
+* Indigo panels use `.nila-surface`: a diagonal indigo base with an indigo light
+  pool top-left and a brass glow bottom-right, so the navy has depth, not a flat fill.
+  The kawung motif layers on top.
+* Cards on that surface are frosted: `.glass` (tinted), `.glass-deep` (code and dense
+  text) and `.glass-light` (light cards such as the hero credential). Each falls back
+  to a solid fill when `backdrop-filter` is unsupported or the user prefers reduced
+  transparency.
+* Use glass only on the indigo surface — never on the paper background.
+
+## 4c. Landing copy (EN / ID)
+* Copy lives in `frontend/components/marketing/landing-copy.ts`.
+* English: short and direct. Bahasa Indonesia: everyday words that read naturally
+  aloud (the "Uncle/Aunt test").
+* The nav switch saves the choice; `/?lang=id` and `/?lang=en` open a version directly,
+  and first-time visitors follow their browser language.
+
 ## 5. Building blocks (`frontend/components/shared/`)
 `PageContainer` / `PageHeader` / `Panel`, `ItemTile` (category tone + icon),
 `EmptyState`, `SearchField` / `FilterChips` / `FavoritesToggle`, `StatusPill` /

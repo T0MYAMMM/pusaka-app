@@ -332,8 +332,12 @@ const I18nContext = createContext<I18nContextValue>({
 
 const isLang = (v: string): v is Lang => v === 'en' || v === 'id'
 
+/** First visit: follow the browser's language list (Accept-Language), not location. */
+const detectLang = (): Lang | null =>
+  navigator.languages?.some((l) => l.toLowerCase().startsWith('id')) ? 'id' : null
+
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [lang, setLang] = useLocalPreference<Lang>('pusaka-lang', 'en', isLang)
+  const [lang, setLang] = useLocalPreference<Lang>('pusaka-lang', 'en', isLang, detectLang)
 
   // Keep <html lang> in sync for screen readers and hyphenation.
   useEffect(() => {

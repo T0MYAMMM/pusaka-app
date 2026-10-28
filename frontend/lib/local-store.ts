@@ -26,11 +26,14 @@ export function useLocalPreference<T extends string>(
   key: string,
   fallback: T,
   isValid: (v: string) => v is T,
+  /** Client-side default when nothing is saved yet (e.g. from the browser language). */
+  detect?: () => T | null,
 ): [T, (value: T) => void] {
   const getSnapshot = useCallback(() => {
     const v = read(key)
-    return v !== null && isValid(v) ? v : fallback
-  }, [key, fallback, isValid])
+    if (v !== null && isValid(v)) return v
+    return detect?.() ?? fallback
+  }, [key, fallback, isValid, detect])
 
   const value = useSyncExternalStore(subscribe, getSnapshot, () => fallback)
 

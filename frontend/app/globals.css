@@ -312,3 +312,73 @@
 .petal-open > *:nth-child(3) { animation-delay: 160ms; }
 .petal-open > *:nth-child(4) { animation-delay: 240ms; }
 .petal-open > *:nth-child(5) { animation-delay: 360ms; }
+
+/* ─── Nila surface + glass ───────────────────────────────────────────
+   The deep indigo panels get depth instead of a flat fill: a diagonal
+   indigo base with two soft light pools (indigo top-left, brass
+   bottom-right). Frosted `.glass` cards sit on top and pick up the
+   glow through backdrop blur. The kawung motif still layers over it. */
+.nila-surface {
+  background-color: #1B2158;
+  background-image:
+    radial-gradient(55% 70% at 12% 0%, rgba(122, 138, 240, 0.42), transparent 62%),
+    radial-gradient(45% 60% at 100% 100%, rgba(217, 174, 85, 0.24), transparent 65%),
+    radial-gradient(35% 45% at 88% 8%, rgba(92, 107, 209, 0.30), transparent 70%),
+    linear-gradient(155deg, #262E72 0%, #1A2056 45%, #12173F 100%);
+}
+.dark .nila-surface {
+  background-color: #12163A;
+  background-image:
+    radial-gradient(55% 70% at 12% 0%, rgba(110, 125, 224, 0.30), transparent 62%),
+    radial-gradient(45% 60% at 100% 100%, rgba(217, 174, 85, 0.16), transparent 65%),
+    radial-gradient(35% 45% at 88% 8%, rgba(92, 107, 209, 0.22), transparent 70%),
+    linear-gradient(155deg, #1C2259 0%, #12163A 50%, #0B0E26 100%);
+}
+
+.glass {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.05));
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 18px 40px -18px rgba(5, 8, 30, 0.55);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+}
+/* Darker glass for code and dense content, so text keeps its contrast. */
+.glass-deep {
+  background: linear-gradient(160deg, rgba(10, 13, 38, 0.72), rgba(10, 13, 38, 0.55));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.10),
+    0 30px 60px -24px rgba(3, 5, 20, 0.7);
+  -webkit-backdrop-filter: blur(18px) saturate(130%);
+  backdrop-filter: blur(18px) saturate(130%);
+}
+/* Light frosted card that floats on the indigo surface. */
+.glass-light {
+  background: color-mix(in oklab, var(--card) 88%, transparent);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 30px 60px -20px rgba(5, 8, 30, 0.55);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  backdrop-filter: blur(16px) saturate(150%);
+}
+.dark .glass-light {
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 30px 60px -20px rgba(0, 0, 0, 0.6);
+}
+/* Without backdrop blur, or when the user asks for less transparency,
+   fall back to solid fills so text never sits on a busy background. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass { background: rgba(38, 46, 110, 0.92); }
+  .glass-deep { background: rgba(10, 13, 38, 0.95); }
+  .glass-light { background: var(--card); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass { background: #2A3274; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .glass-deep { background: #0B0E26; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .glass-light { background: var(--card); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
