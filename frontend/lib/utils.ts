@@ -6,20 +6,34 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  const nf = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 })
+  if (bytes < 1024) return `${nf.format(bytes)} B`
+  if (bytes < 1024 * 1024) return `${nf.format(bytes / 1024)} KB`
+  return `${nf.format(bytes / (1024 * 1024))} MB`
 }
 
-export function formatDistanceToNow(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime()
-  const s = Math.floor(diff / 1000)
-  if (s < 60) return 'just now'
-  const m = Math.floor(s / 60)
-  if (m < 60) return `${m}m ago`
-  const h = Math.floor(m / 60)
-  if (h < 24) return `${h}h ago`
-  const d = Math.floor(h / 24)
-  if (d < 30) return `${d}d ago`
-  return new Date(dateStr).toLocaleDateString()
+const UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
+  ['year', 31_536_000],
+  ['month', 2_592_000],
+  ['week', 604_800],
+  ['day', 86_400],
+  ['hour', 3_600],
+  ['minute', 60],
+]
+
+/** "5 min. ago", "yesterday", "in 3 days" — locale-aware via Intl. */
+export function formatDistanceToNow(dateStr: string, locale = 'en'): string {
+  const seconds = Math.round((new Date(dateStr).getTime() - Date.now()) / 1000)
+  const abs = Math.abs(seconds)
+  if (abs < 45) return locale === 'id' ? 'baru saja' : 'just now'
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto', style: 'short' })
+  for (const [unit, size] of UNITS) {
+    if (abs >= size || unit === 'minute') return rtf.format(Math.round(seconds / size), unit)
+  }
+  return rtf.format(seconds, 'second')
+}
+
+/** "28 Oct 2026" in the user's locale. */
+export function formatDate(dateStr: string, locale?: string, opts?: Intl.DateTimeFormatOptions): string {
+  return new Intl.DateTimeFormat(locale, opts ?? { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(dateStr))
 }

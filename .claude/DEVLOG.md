@@ -132,6 +132,29 @@
 
 ---
 
+## Phase 8 — UI Revamp "Nila & Kuningan"
+
+Guided by the `frontend-design` (anthropics/skills) and `web-design-guidelines`
+(vercel-labs/agent-skills) skills, vendored into `.claude/skills/`. Design
+reference: `.claude/STYLE_GUIDE.md`.
+
+| # | Checkpoint | Status | Date | Notes |
+|---|---|---|---|---|
+| 8.1 | Design tokens (light + dark), fonts | [DONE] | 2026-10-28 | Indigo + brass on cool paper; Plus Jakarta Sans + JetBrains Mono |
+| 8.2 | Brand mark + kawung motif | [DONE] | 2026-10-28 | `components/brand/logo.tsx`, `public/icon.svg`, `.kawung` CSS mask |
+| 8.3 | Shared building blocks | [DONE] | 2026-10-28 | `components/shared/*`, `lib/item-meta.ts`, `lib/password.ts` |
+| 8.4 | App shell: sidebar, topbar, ⌘K palette | [DONE] | 2026-10-28 | Replaces `keyboard-shortcuts.tsx`; quick-add menu; hydration-safe prefs |
+| 8.5 | Dashboard vault health | [DONE] | 2026-10-28 | Uses `/credentials/expiring` + `/credentials/duplicates` |
+| 8.6 | Credentials list/detail/form | [DONE] | 2026-10-28 | Password generator; env + expiry now editable |
+| 8.7 | Notes + documents | [DONE] | 2026-10-28 | Accessible drop zone; inline upload errors |
+| 8.8 | Settings, vaults, activity, search | [DONE] | 2026-10-28 | Native selects replaced; confirmations on revoke/remove |
+| 8.9 | Auth screens | [DONE] | 2026-10-28 | Split layout, inline announced errors, strength meter |
+| 8.10 | Landing page | [DONE] | 2026-10-28 | Security copy corrected (not zero-knowledge) |
+| 8.11 | Lint, typecheck, build, screenshot review | [DONE] | 2026-10-28 | `eslint .` 0 problems (was 7 errors / 17 warnings) |
+| 8.12 | `/register?invite=` token ignored | [BLOCKED] | 2026-10-28 | Pre-existing logic bug; invitee lands on dashboard without joining. Needs a follow-up |
+
+---
+
 ## Summary
 
 | Phase | Total | Done | In Progress | Blocked |
@@ -143,4 +166,5 @@
 | 5 — Frontend Features | 16 | 16 | 0 | 0 |
 | 6 — Polish | 9 | 9 | 0 | 0 |
 | 7 — Per-User Encryption | 13 | 13 | 0 | 0 |
-| **Total** | **76** | **76** | **0** | **0** |
+| 8 — UI Revamp | 12 | 11 | 0 | 1 |
+| **Total** | **88** | **87** | **0** | **1** |

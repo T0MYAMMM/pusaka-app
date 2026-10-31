@@ -1,197 +1,245 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
-  ShieldCheck, Terminal, Users, Key, Lock, Zap, ChevronDown, ChevronUp,
-  Globe, GitBranch, Clock, ArrowRight, Check, Star, Loader2,
+  Check, ChevronDown, Clock, Copy, Crown, Eye, EyeOff, FolderArchive, Globe, IdCard, KeyRound,
+  Landmark, Loader2, Lock, Server, Shield, StickyNote, Terminal, User, Users,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { toast } from 'sonner'
+import { Logo, LogoMark } from '@/components/brand/logo'
+import { ItemTile } from '@/components/shared/item-tile'
+import { SecretText } from '@/components/shared/secret-text'
+import { StatusPill } from '@/components/shared/badges'
+import { cn } from '@/lib/utils'
+import { useT, type Lang } from '@/lib/i18n'
+import { LANDING_COPY, type LandingCopy } from './landing-copy'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 
-/**
- * One container rhythm for every landing section: same max width, same
- * gutters. Sections that want narrower copy nest a second max-width
- * inside instead of shrinking the outer container, so the horizontal
- * gutter never shifts between sections.
- */
+/** One container rhythm for every section. */
 const CONTAINER = 'mx-auto w-full max-w-6xl px-5 sm:px-6 lg:px-8'
+const SECTION = 'py-20 sm:py-24 lg:py-28'
 
-/** Vertical rhythm shared by every section. */
-const SECTION = 'py-16 sm:py-20 lg:py-24'
+/** Indigo panel with depth: lit surface + kawung motif on top. */
+const NILA_PANEL = 'nila-surface kawung text-white [--kawung-color:rgba(217,174,85,0.14)] [--kawung-size:56px]'
 
-const NAV_LINKS = [
-  { href: '#features', label: 'Features' },
-  { href: '#how-it-works', label: 'How it works' },
-  { href: '#pricing', label: 'Pricing' },
-  { href: '#faq', label: 'FAQ' },
-]
+// ─── Language switch ─────────────────────────────────────────────────
 
-// ---------------------------------------------------------------------------
-// Nav
-// ---------------------------------------------------------------------------
-
-function Nav() {
+function LanguageSwitch({ label }: { label: string }) {
+  const { lang, setLang } = useT()
+  const choose = (l: Lang) => {
+    setLang(l)
+    // Keep the URL shareable: /?lang=id opens the Indonesian page.
+    const url = new URL(window.location.href)
+    url.searchParams.set('lang', l)
+    window.history.replaceState(null, '', url)
+  }
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/85 backdrop-blur-sm">
-      <div className={`${CONTAINER} flex h-16 items-center justify-between gap-4`}>
-        <Link
-          href="/"
-          className="flex shrink-0 items-center gap-2 font-serif text-xl font-bold tracking-wide"
+    <div role="group" aria-label={label} className="inline-flex h-9 items-center rounded-lg border bg-card p-0.5 text-xs font-bold">
+      {(['en', 'id'] as const).map((l) => (
+        <button
+          key={l}
+          type="button"
+          aria-pressed={lang === l}
+          onClick={() => choose(l)}
+          lang={l}
+          className={cn(
+            'inline-flex h-full min-w-9 items-center justify-center rounded-md px-2 uppercase transition-colors',
+            lang === l ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
+          )}
         >
-          <ShieldCheck className="h-5 w-5 text-primary" aria-hidden="true" />
-          Pusaka
+          <span aria-hidden="true">{l}</span>
+          <span className="sr-only">{l === 'en' ? 'English' : 'Bahasa Indonesia'}</span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// ─── Nav ─────────────────────────────────────────────────────────────
+
+function Nav({ c }: { c: LandingCopy }) {
+  return (
+    <header className="sticky top-0 z-40 bg-background/75 backdrop-blur-md">
+      <div className={`${CONTAINER} flex h-16 items-center justify-between gap-3`}>
+        <Link href="/" className="shrink-0 rounded-lg" aria-label="Pusaka">
+          <Logo />
         </Link>
-        <nav aria-label="Sections" className="hidden md:flex items-center gap-6 text-sm">
-          {NAV_LINKS.map(({ href, label }) => (
-            <a
-              key={href}
-              href={href}
-              className="rounded-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
+        <nav aria-label="Sections" className="hidden items-center gap-6 text-sm font-medium lg:flex">
+          {c.nav.links.map(({ href, label }) => (
+            <a key={href} href={href} className="rounded-sm text-muted-foreground transition-colors hover:text-foreground">
               {label}
             </a>
           ))}
         </nav>
-        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-          <Link href="/login">
-            <Button variant="ghost" size="sm">Sign in</Button>
-          </Link>
-          <Link href="/register">
-            <Button size="sm">Start free</Button>
-          </Link>
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          <LanguageSwitch label={c.nav.language} />
+          <Button variant="ghost" size="sm" asChild className="hidden h-9 sm:inline-flex">
+            <Link href="/login">{c.nav.signIn}</Link>
+          </Button>
+          <Button size="sm" asChild className="h-9">
+            <Link href="/register">{c.nav.start}</Link>
+          </Button>
         </div>
       </div>
     </header>
   )
 }
 
-// ---------------------------------------------------------------------------
-// Hero
-// ---------------------------------------------------------------------------
+// ─── Hero ────────────────────────────────────────────────────────────
+// The characteristic moment of a vault is a secret being kept — and
+// handed back when you ask. The hero shows exactly that, with the real
+// item components, and lets the visitor reveal the password themselves.
 
-const CLI_DEMO = `$ cm login
-Username: alice
-Password: ••••••••
-Logged in. API key stored: cmv1_a3f9… (scope: read)
-
-$ cm list --env prod
-  ID  LABEL                  TYPE    ENV   USERNAME
-----  ---------------------  ------  ----  --------
-   1  Production DB          server  prod  admin
-   2  Stripe Live Key        api     prod
-   3  AWS Deploy Token       api     prod  deploy-bot
-
-$ cm get "Production DB"
-hunter2
-
-$ cm expiring --days 14
-Credentials expiring within 14 days:
-   2  Stripe Live Key        expires: 2026-03-20`
-
-const HERO_PROOF = [
-  'No credit card required',
-  '100 credentials free forever',
-  'Open API',
-]
-
-function Hero() {
+function HeroVault({ c }: { c: LandingCopy['vault'] }) {
+  const [revealed, setRevealed] = useState(false)
   return (
-    <section className="relative overflow-hidden py-16 sm:py-20 lg:py-28">
-      {/* subtle background grid */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 opacity-[0.03]"
-        style={{
-          backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 39px,currentColor 39px,currentColor 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,currentColor 39px,currentColor 40px)',
-        }}
-      />
+    <div className={cn(NILA_PANEL, 'relative overflow-hidden rounded-[1.75rem] p-5 shadow-2xl shadow-[#141A44]/30 sm:p-8')}>
+      {/* A second light pool right behind the card gives the frosted
+          glass something to blur, so it reads as glass, not grey. */}
+      <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-1/2 size-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#7A8AF0]/30 blur-3xl" />
 
-      <div className={`${CONTAINER} relative`}>
-        <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-12">
-          {/* Left — copy */}
-          <div className="min-w-0 space-y-6">
-            <Badge variant="outline" className="gap-1.5">
-              <Star className="h-3 w-3 fill-primary text-primary" aria-hidden="true" />
-              End-to-end encrypted · Free to start
-            </Badge>
+      <div className="relative mb-5 flex items-center gap-3">
+        <span className="glass inline-flex size-11 items-center justify-center rounded-xl">
+          <LogoMark className="size-8" animated tile={false} />
+        </span>
+        <div>
+          <p className="text-sm font-semibold">{c.name}</p>
+          <p className="text-xs text-white/65">{c.meta}</p>
+        </div>
+      </div>
 
-            <h1 className="text-balance text-4xl font-bold leading-[1.1] tracking-tight sm:text-5xl">
-              Pusaka<br />
-              <span className="text-primary">built for developers</span>
-            </h1>
-
-            <p className="max-w-lg text-base leading-relaxed text-muted-foreground sm:text-lg">
-              Store secrets with environment labels, track expiry, share vaults with your team,
-              and inject credentials in CI/CD — all from a single encrypted vault.
-            </p>
-
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <Link href="/register" className="sm:w-auto">
-                <Button size="lg" className="w-full gap-2 sm:w-auto">
-                  Start free <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                </Button>
-              </Link>
-              <a href="#how-it-works" className="sm:w-auto">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                  See how it works
-                </Button>
-              </a>
-            </div>
-
-            <ul className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-foreground">
-              {HERO_PROOF.map((item) => (
-                <li key={item} className="flex items-center gap-1.5">
-                  <Check className="h-3.5 w-3.5 shrink-0 text-primary" aria-hidden="true" />
-                  {item}
-                </li>
-              ))}
-            </ul>
+      {/* Credential card — light frosted glass */}
+      <div className="glass-light relative rounded-2xl p-1 text-card-foreground">
+        <div className="flex items-center gap-3 px-4 pb-3 pt-4">
+          <ItemTile icon={Landmark} tone="jade" />
+          <div className="min-w-0 flex-1">
+            <p className="font-bold">BCA KlikPay</p>
+            <p className="truncate text-xs text-muted-foreground">klikbca.com</p>
           </div>
-
-          {/* Right — terminal demo. Deliberately dark in both themes: it is
-              terminal chrome, not a surface, so it keeps its own palette. */}
-          <div className="min-w-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 shadow-xl">
-            <div className="flex items-center gap-1.5 border-b border-zinc-800 bg-zinc-900 px-4 py-3">
-              <span className="h-3 w-3 rounded-full bg-zinc-600" />
-              <span className="h-3 w-3 rounded-full bg-zinc-700" />
-              <span className="h-3 w-3 rounded-full bg-zinc-700" />
-              <span className="ml-2 font-mono text-xs text-zinc-400">terminal</span>
+          <StatusPill tone="success">{c.strong}</StatusPill>
+        </div>
+        <div className="divide-y rounded-xl border bg-background/50">
+          <div className="flex items-center justify-between gap-3 px-4 py-3">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-muted-foreground">{c.username}</p>
+              <p className="mt-0.5 text-sm font-semibold">sariwulan</p>
             </div>
-            <pre className="overflow-x-auto whitespace-pre p-4 font-mono text-xs leading-relaxed text-emerald-300 sm:p-5">
-              {CLI_DEMO}
-            </pre>
+            <Copy className="size-4 text-muted-foreground" aria-hidden="true" />
+          </div>
+          <div className="flex items-center justify-between gap-3 px-4 py-3">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-muted-foreground">{c.password}</p>
+              <p className="mt-0.5 min-h-6 text-[0.9375rem]" aria-live="polite">
+                <SecretText value="Bca#2024!keluarga" revealed={revealed} />
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setRevealed((r) => !r)}
+              aria-pressed={revealed}
+              className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border bg-card px-2.5 text-xs font-semibold transition-colors hover:bg-accent"
+            >
+              {revealed ? <EyeOff className="size-3.5" aria-hidden="true" /> : <Eye className="size-3.5" aria-hidden="true" />}
+              {revealed ? c.hide : c.show}
+            </button>
           </div>
         </div>
+      </div>
+
+      {/* Two quieter items in tinted glass */}
+      <div className="relative mt-3 grid gap-3 sm:grid-cols-2">
+        <div className="glass flex items-center gap-3 rounded-xl p-3">
+          <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-white/12">
+            <IdCard className="size-4" aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold">{c.docName}</p>
+            <p className="truncate font-mono text-[0.6875rem] text-white/65" translate="no">ktp-sari.pdf</p>
+          </div>
+        </div>
+        <div className="glass flex items-center gap-3 rounded-xl p-3">
+          <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#D9AE55]/25">
+            <Clock className="size-4 text-[#F1D597]" aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold">{c.reminderName}</p>
+            <p className="truncate text-[0.6875rem] text-white/65">{c.reminder}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function Hero({ c, vault }: { c: LandingCopy['hero']; vault: LandingCopy['vault'] }) {
+  return (
+    <section className="relative overflow-hidden pb-20 pt-10 sm:pb-24 sm:pt-14 lg:pb-28 lg:pt-20">
+      <div className={`${CONTAINER} grid items-center gap-12 lg:grid-cols-[1.05fr_1fr] lg:gap-16`}>
+        <div className="min-w-0">
+          <p className="mb-6 inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1 text-[0.8125rem] font-medium text-muted-foreground">
+            <span className="size-1.5 rounded-full bg-brass" aria-hidden="true" />
+            {c.badge}
+          </p>
+          <h1 className="text-[2.6rem] font-extrabold leading-[1.03] tracking-[-0.04em] text-balance sm:text-6xl lg:text-[4.1rem]">
+            {c.title}
+          </h1>
+          <p className="mt-6 max-w-xl text-pretty text-lg leading-relaxed text-muted-foreground">{c.lead}</p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <Button size="lg" asChild>
+              <Link href="/register">{c.primary}</Link>
+            </Button>
+            <Button size="lg" variant="outline" asChild>
+              <a href="#keep">{c.secondary}</a>
+            </Button>
+          </div>
+          <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+            {c.proof.map((item) => (
+              <li key={item} className="flex items-center gap-1.5">
+                <Check className="size-4 shrink-0 text-success" aria-hidden="true" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <HeroVault c={vault} />
       </div>
     </section>
   )
 }
 
-// ---------------------------------------------------------------------------
-// Trust bar
-// ---------------------------------------------------------------------------
+// ─── What it keeps ───────────────────────────────────────────────────
 
-function TrustBar() {
-  const items = [
-    { icon: Lock, label: 'PBKDF2 + Fernet encryption' },
-    { icon: Key, label: 'Per-user vault keys' },
-    { icon: Globe, label: 'Environment-aware (dev/staging/prod)' },
-    { icon: GitBranch, label: 'CI/CD credential injection' },
-    { icon: Clock, label: 'Expiry tracking & alerts' },
-  ]
+const KEEP_VISUALS = [
+  { icon: KeyRound, tone: 'indigo' as const },
+  { icon: StickyNote, tone: 'brass' as const },
+  { icon: FolderArchive, tone: 'jade' as const },
+]
+
+function Keep({ c }: { c: LandingCopy['keep'] }) {
   return (
-    <section className="border-y bg-muted/40 py-6">
-      <div className={CONTAINER}>
-        <ul className="flex flex-wrap justify-center gap-x-6 gap-y-3 sm:gap-x-8">
-          {items.map(({ icon: Icon, label }) => (
-            <li key={label} className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-              {label}
+    <section id="keep" className={cn(SECTION, 'border-t')}>
+      <div className={`${CONTAINER} grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20`}>
+        <div className="lg:sticky lg:top-28 lg:self-start">
+          <h2 className="text-3xl font-extrabold tracking-[-0.03em] text-balance sm:text-4xl">{c.title}</h2>
+          <p className="mt-4 max-w-md text-pretty text-muted-foreground">{c.lead}</p>
+        </div>
+        <ul className="divide-y rounded-2xl border bg-card">
+          {c.items.map(({ title, body, examples }, i) => (
+            <li key={title} className="flex gap-5 p-6 sm:p-8">
+              <ItemTile icon={KEEP_VISUALS[i].icon} tone={KEEP_VISUALS[i].tone} size="lg" />
+              <div className="min-w-0 space-y-3">
+                <h3 className="text-lg font-bold tracking-[-0.01em]">{title}</h3>
+                <p className="max-w-prose text-pretty text-[0.9375rem] leading-relaxed text-muted-foreground">{body}</p>
+                <ul className="flex flex-wrap gap-1.5" aria-label={c.examplesLabel}>
+                  {examples.map((e) => (
+                    <li key={e} className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">{e}</li>
+                  ))}
+                </ul>
+              </div>
             </li>
           ))}
         </ul>
@@ -200,146 +248,149 @@ function TrustBar() {
   )
 }
 
-// ---------------------------------------------------------------------------
-// Features
-// ---------------------------------------------------------------------------
+// ─── Sharing ─────────────────────────────────────────────────────────
 
-/**
- * Icon chips rotate through the three palette accents rather than a
- * six-colour rainbow, so the grid stays calm and re-themes with the tokens.
- */
-const ACCENTS = {
-  sage: 'bg-sage/10 text-sage',
-  mist: 'bg-mist/10 text-mist',
-  clay: 'bg-clay/10 text-clay',
-} as const
-
-const FEATURES = [
-  {
-    icon: Lock,
-    title: 'Zero-knowledge encryption',
-    description:
-      'Your vault is encrypted with a key derived from your password using PBKDF2 (600k iterations). The server never sees your plaintext credentials — not even for support.',
-    accent: ACCENTS.sage,
-  },
-  {
-    icon: Terminal,
-    title: 'Developer-native CLI',
-    description:
-      'The `cm` CLI lets you inject secrets into any script or CI pipeline. `cm get "DB_PASSWORD"` pipes clean output with no trailing newline — ready for shell substitution.',
-    accent: ACCENTS.mist,
-  },
-  {
-    icon: Globe,
-    title: 'Environment labels',
-    description:
-      'Tag every credential with dev, staging, prod, or global. Filter by environment in the UI or `cm list --env prod`. Know exactly what runs where.',
-    accent: ACCENTS.clay,
-  },
-  {
-    icon: Users,
-    title: 'Team vaults & RBAC',
-    description:
-      'Create shared vaults for your team with fine-grained roles: owner, admin, member, viewer. Credentials are re-encrypted with a shared vault key — no individual key sharing.',
-    accent: ACCENTS.sage,
-  },
-  {
-    icon: Clock,
-    title: 'Expiry tracking',
-    description:
-      'Set an expiry date on API keys, certificates, and tokens. Get warned 14 days out. Run `cm expiring --days 30` in your alerting pipeline.',
-    accent: ACCENTS.mist,
-  },
-  {
-    icon: Key,
-    title: 'Scoped API keys',
-    description:
-      'Generate read-only or read-write API keys for CI/CD. Keys use SHA-256 hashing — only the prefix is stored. Revoke instantly from the web UI.',
-    accent: ACCENTS.clay,
-  },
+const ROLE_VISUALS = [
+  { icon: Crown, tone: 'brass' as const },
+  { icon: Shield, tone: 'indigo' as const },
+  { icon: User, tone: 'jade' as const },
+  { icon: Eye, tone: 'slate' as const },
 ]
 
-function SectionHeading({ title, lead }: { title: string; lead?: string }) {
+function Share({ c }: { c: LandingCopy['share'] }) {
   return (
-    <div className="mx-auto max-w-2xl space-y-3 text-center">
-      <h2 className="text-balance text-2xl font-bold tracking-tight sm:text-3xl">{title}</h2>
-      {lead && <p className="text-pretty text-base text-muted-foreground sm:text-lg">{lead}</p>}
-    </div>
-  )
-}
-
-function Features() {
-  return (
-    <section id="features" className={SECTION}>
-      <div className={`${CONTAINER} space-y-10 sm:space-y-12`}>
-        <SectionHeading
-          title="Built for the way developers actually work"
-          lead="Not another generic password manager — every feature is designed for dev team workflows."
-        />
-        <div className="grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
-          {FEATURES.map(({ icon: Icon, title, description, accent }) => (
-            <div
-              key={title}
-              className="space-y-4 rounded-xl border bg-card p-6 transition-shadow hover:shadow-md"
-            >
-              <div className={`inline-flex rounded-lg p-2.5 ${accent}`}>
-                <Icon className="h-5 w-5" aria-hidden="true" />
+    <section id="share" className={cn(SECTION, 'border-y bg-card/60')}>
+      <div className={`${CONTAINER} grid items-center gap-12 lg:grid-cols-2 lg:gap-20`}>
+        <div className="order-2 lg:order-1">
+          <div className="rounded-2xl border bg-card p-2">
+            <div className="flex items-center justify-between gap-3 px-4 py-3">
+              <div className="flex items-center gap-3">
+                <ItemTile icon={Users} tone="indigo" size="sm" />
+                <p className="font-semibold">{c.vault}</p>
               </div>
-              <div className="space-y-1">
-                <h3 className="font-semibold">{title}</h3>
-                <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>
-              </div>
+              <span className="text-xs text-muted-foreground">{c.members}</span>
             </div>
-          ))}
+            <ul className="divide-y rounded-xl border bg-background/60">
+              {c.roles.map(({ name, role, note }, i) => (
+                <li key={name} className="flex items-center gap-3 px-4 py-3">
+                  <ItemTile icon={ROLE_VISUALS[i].icon} tone={ROLE_VISUALS[i].tone} size="sm" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">{name}</p>
+                    <p className="truncate text-xs text-muted-foreground">{note}</p>
+                  </div>
+                  <span className="shrink-0 rounded-md bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground">{role}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        <div className="order-1 lg:order-2">
+          <h2 className="text-3xl font-extrabold tracking-[-0.03em] text-balance sm:text-4xl">{c.title}</h2>
+          <p className="mt-4 max-w-lg text-pretty text-muted-foreground">{c.body}</p>
+          <ul className="mt-8 space-y-3 text-[0.9375rem]">
+            {c.points.map((t) => (
+              <li key={t} className="flex gap-3">
+                <Check className="mt-0.5 size-5 shrink-0 text-success" aria-hidden="true" />
+                {t}
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </section>
   )
 }
 
-// ---------------------------------------------------------------------------
-// How it works
-// ---------------------------------------------------------------------------
+// ─── For developers ──────────────────────────────────────────────────
 
-const STEPS = [
-  {
-    step: '01',
-    title: 'Store once',
-    description: 'Add credentials in the web UI or via the CLI. Tag with environment, set expiry, mark favorites.',
-    code: 'cm set "DB_PASSWORD" s3cr3t --env prod --type server',
-  },
-  {
-    step: '02',
-    title: 'Access anywhere',
-    description: 'Pull secrets in CI scripts, Docker entrypoints, or shell sessions. Pipe-friendly with no trailing newline.',
-    code: 'export DB_PASS=$(cm get "DB_PASSWORD")',
-  },
-  {
-    step: '03',
-    title: 'Share with your team',
-    description: 'Invite teammates to an org, create shared vaults, and control access with roles. Everyone gets their own encrypted view.',
-    code: 'cm login --scope read\n# → saves scoped API key to ~/.cm/config.json',
-  },
-]
+const CLI_DEMO = `$ cm login
+Username: sari
+Password: ••••••••
+Logged in. API key stored (scope: read)
 
-function HowItWorks() {
+$ cm list --env prod
+  ID  LABEL              TYPE    ENV   USERNAME
+   4  Production DB      server  prod  admin
+   5  Stripe Live Key    api     prod
+
+$ export DB_PASS=$(cm get "Production DB")
+
+$ cm expiring --days 14
+   5  Stripe Live Key    expires: 2026-11-06`
+
+const DEV_ICONS = [Globe, Clock, KeyRound, Terminal]
+
+/** Renders `backticked` fragments of copy as inline code. */
+function WithCode({ text }: { text: string }) {
   return (
-    <section id="how-it-works" className={`${SECTION} bg-muted/30`}>
-      <div className={`${CONTAINER} space-y-10 sm:space-y-12`}>
-        <SectionHeading title="Up and running in minutes" lead="Install once, use everywhere." />
-        <ol className="grid gap-8 lg:grid-cols-3">
-          {/* min-w-0: grid items default to min-width:auto, which lets the
-              long <pre> below push the whole track past the viewport. */}
-          {STEPS.map(({ step, title, description, code }) => (
-            <li key={step} className="min-w-0 space-y-4">
-              <div className="flex items-center gap-3">
-                <span className="font-mono text-4xl font-bold text-primary/25">{step}</span>
-                <h3 className="text-lg font-semibold">{title}</h3>
-              </div>
-              <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>
-              <pre className="overflow-x-auto whitespace-pre rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3 font-mono text-xs leading-relaxed text-emerald-300">
-                {code}
-              </pre>
+    <>
+      {text.split(/(`[^`]+`)/).map((part, i) =>
+        part.startsWith('`') ? (
+          <code key={i} className="rounded bg-white/12 px-1 py-0.5 font-mono text-[0.8125em] text-white" translate="no">
+            {part.slice(1, -1)}
+          </code>
+        ) : (
+          part
+        ),
+      )}
+    </>
+  )
+}
+
+function Developers({ c }: { c: LandingCopy['developers'] }) {
+  return (
+    <section id="developers" className={cn(NILA_PANEL, 'relative overflow-hidden py-20 sm:py-24 lg:py-28')}>
+      <div className={`${CONTAINER} relative grid items-center gap-12 lg:grid-cols-[1fr_1.1fr] lg:gap-16`}>
+        <div>
+          <p className="mb-4 inline-flex items-center gap-2 text-sm font-semibold text-[#F1D597]">
+            <Server className="size-4" aria-hidden="true" />
+            {c.eyebrow}
+          </p>
+          <h2 className="text-3xl font-extrabold tracking-[-0.03em] text-balance sm:text-4xl">{c.title}</h2>
+          <dl className="mt-10 grid gap-3 sm:grid-cols-2">
+            {c.features.map(({ title, body }, i) => {
+              const Icon = DEV_ICONS[i]
+              return (
+                <div key={title} className="glass rounded-xl p-4">
+                  <dt className="flex items-center gap-2 font-semibold">
+                    <Icon className="size-4 text-[#F1D597]" aria-hidden="true" />
+                    {title}
+                  </dt>
+                  <dd className="mt-1.5 text-sm leading-relaxed text-white/75"><WithCode text={body} /></dd>
+                </div>
+              )
+            })}
+          </dl>
+        </div>
+        <div className="glass-deep min-w-0 overflow-hidden rounded-2xl">
+          <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3">
+            <span className="size-2.5 rounded-full bg-white/25" />
+            <span className="size-2.5 rounded-full bg-white/18" />
+            <span className="size-2.5 rounded-full bg-white/12" />
+            <span className="ml-2 font-mono text-xs text-white/55">~/projects/toko</span>
+          </div>
+          <pre className="overflow-x-auto p-5 font-mono text-[0.8125rem] leading-relaxed text-[#C9D0FF]" translate="no">
+            {CLI_DEMO}
+          </pre>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ─── How it works (a real sequence, so it is numbered) ────────────────
+
+function HowItWorks({ c }: { c: LandingCopy['how'] }) {
+  return (
+    <section className={SECTION}>
+      <div className={CONTAINER}>
+        <h2 className="max-w-2xl text-3xl font-extrabold tracking-[-0.03em] text-balance sm:text-4xl">{c.title}</h2>
+        <ol className="mt-12 grid gap-10 md:grid-cols-3 md:gap-8">
+          {c.steps.map(({ title, body }, i) => (
+            <li key={title} className="border-t-2 border-primary pt-5">
+              <p className="text-sm font-bold text-primary tabular">{c.step} {i + 1}</p>
+              <h3 className="mt-2 text-lg font-bold">{title}</h3>
+              <p className="mt-2 text-pretty text-[0.9375rem] leading-relaxed text-muted-foreground">{body}</p>
             </li>
           ))}
         </ol>
@@ -348,193 +399,107 @@ function HowItWorks() {
   )
 }
 
-// ---------------------------------------------------------------------------
-// Pricing
-// ---------------------------------------------------------------------------
+// ─── Security ────────────────────────────────────────────────────────
 
-const PLANS = [
-  {
-    name: 'Free',
-    price: '$0',
-    period: 'forever',
-    description: 'For solo developers getting started.',
-    features: [
-      '100 credentials',
-      '1 user',
-      'API key access',
-      'CLI tool',
-      '30-day activity log',
-    ],
-    cta: 'Start free',
-    href: '/register',
-    variant: 'outline' as const,
-  },
-  {
-    name: 'Pro',
-    price: '$6',
-    period: '/month',
-    description: 'For power users who need unlimited storage.',
-    features: [
-      'Unlimited credentials',
-      '1 user',
-      'Full activity log',
-      'Duplicate password detection',
-      'Priority support',
-    ],
-    cta: 'Upgrade to Pro',
-    href: '/register',
-    variant: 'default' as const,
-    highlight: true,
-  },
-  {
-    name: 'Team',
-    price: '$8',
-    period: '/user/month',
-    description: 'For teams that need shared vaults.',
-    features: [
-      'Everything in Pro',
-      'Up to 25 users',
-      'Shared vaults',
-      'RBAC roles (owner/admin/member/viewer)',
-      'Audit trail',
-    ],
-    cta: 'Start team trial',
-    href: '/register',
-    variant: 'outline' as const,
-  },
-]
-
-function Pricing() {
+function Security({ c }: { c: LandingCopy['security'] }) {
   return (
-    <section id="pricing" className={SECTION}>
-      <div className={`${CONTAINER} space-y-10 sm:space-y-12`}>
-        <SectionHeading
-          title="Simple, transparent pricing"
-          lead="Start free. Upgrade when your team does."
-        />
-        <div className="mx-auto grid max-w-5xl gap-5 sm:gap-6 lg:grid-cols-3">
-          {PLANS.map((plan) => (
+    <section className={cn(SECTION, 'border-t')}>
+      <div className={`${CONTAINER} grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20`}>
+        <div>
+          <span className="inline-flex size-12 items-center justify-center rounded-xl bg-accent text-primary">
+            <Lock className="size-6" aria-hidden="true" />
+          </span>
+          <h2 className="mt-5 text-3xl font-extrabold tracking-[-0.03em] text-balance sm:text-4xl">{c.title}</h2>
+          <p className="mt-4 max-w-md text-pretty text-muted-foreground">{c.lead}</p>
+        </div>
+        <dl className="grid gap-x-10 gap-y-8 sm:grid-cols-2">
+          {c.items.map(({ term, detail }) => (
+            <div key={term}>
+              <dt className="font-bold">{term}</dt>
+              <dd className="mt-2 text-pretty text-[0.9375rem] leading-relaxed text-muted-foreground">{detail}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </section>
+  )
+}
+
+// ─── Pricing ─────────────────────────────────────────────────────────
+
+function Pricing({ c }: { c: LandingCopy['pricing'] }) {
+  return (
+    <section id="pricing" className={cn(SECTION, 'border-y bg-card/60')}>
+      <div className={CONTAINER}>
+        <div className="max-w-2xl">
+          <h2 className="text-3xl font-extrabold tracking-[-0.03em] text-balance sm:text-4xl">{c.title}</h2>
+          <p className="mt-4 text-muted-foreground">{c.lead}</p>
+        </div>
+        <div className="mt-12 grid gap-5 lg:grid-cols-3">
+          {c.plans.map((plan) => (
             <div
               key={plan.name}
-              className={`flex flex-col gap-6 rounded-xl border bg-card p-6 sm:p-7 ${
-                plan.highlight ? 'border-primary shadow-lg ring-1 ring-primary/20' : ''
-              }`}
+              className={cn(
+                'relative flex flex-col rounded-2xl border bg-card p-7',
+                plan.highlight && 'border-primary ring-1 ring-primary',
+              )}
             >
-              <Badge className={`self-start text-[11px] ${plan.highlight ? '' : 'invisible'}`}>
-                Most popular
-              </Badge>
-              <div>
-                <p className="text-lg font-semibold">{plan.name}</p>
-                <div className="mt-1 flex items-baseline gap-1">
-                  <span className="text-3xl font-bold tracking-tight">{plan.price}</span>
-                  <span className="text-sm text-muted-foreground">{plan.period}</span>
-                </div>
-                <p className="mt-2 text-sm text-muted-foreground">{plan.description}</p>
-              </div>
-              <ul className="flex-1 space-y-2">
+              {plan.highlight && (
+                <span className="absolute -top-3 left-7 rounded-full bg-primary px-2.5 py-0.5 text-xs font-bold text-primary-foreground">
+                  {c.badge}
+                </span>
+              )}
+              <p className="text-lg font-bold">{plan.name}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{plan.description}</p>
+              <p className="mt-6 flex items-baseline gap-2">
+                <span className="text-4xl font-extrabold tracking-[-0.03em] tabular">{plan.price}</span>
+                <span className="text-sm text-muted-foreground">{plan.period}</span>
+              </p>
+              <ul className="mt-6 flex-1 space-y-2.5 text-[0.9375rem]">
                 {plan.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2 text-sm">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+                  <li key={f} className="flex gap-2.5">
+                    <Check className="mt-0.5 size-4 shrink-0 text-success" aria-hidden="true" />
                     {f}
                   </li>
                 ))}
               </ul>
-              <Link href={plan.href} className="block">
-                <Button variant={plan.variant} className="w-full">{plan.cta}</Button>
-              </Link>
+              <Button asChild variant={plan.highlight ? 'default' : 'outline'} className="mt-8 w-full">
+                <Link href="/register">{plan.cta}</Link>
+              </Button>
             </div>
           ))}
         </div>
-        <p className="mx-auto max-w-2xl text-center text-sm text-muted-foreground">
-          All plans include end-to-end encryption, CLI access, and API key auth. Cancel any time.
-        </p>
       </div>
     </section>
   )
 }
 
-// ---------------------------------------------------------------------------
-// FAQ
-// ---------------------------------------------------------------------------
+// ─── FAQ ─────────────────────────────────────────────────────────────
 
-const FAQS = [
-  {
-    q: 'How does the encryption work?',
-    a: 'Each user gets a unique random vault key. That key is encrypted with a wrapping key derived from your password using PBKDF2 (600,000 iterations, SHA-256). The server stores only the encrypted vault key — your plaintext credentials are never visible to us, even if our database is breached.',
-  },
-  {
-    q: 'What happens if I forget my password?',
-    a: 'We support password reset via email. When you reset your password, we re-derive the wrapping key and re-encrypt your vault key — your vault data is preserved. This requires the recovery-encrypted vault key stored on the server.',
-  },
-  {
-    q: 'How do shared team vaults work?',
-    a: 'Shared vaults use a server-derived key (HMAC-SHA256 of the server secret and vault ID). When you share a credential, it is decrypted with your personal key and re-encrypted with the shared vault key. All vault members decrypt with the same shared key. This is a server-assisted sharing model.',
-  },
-  {
-    q: 'Can I self-host Pusaka?',
-    a: 'Yes — the backend is a standard FastAPI + PostgreSQL app. All configuration is via environment variables. The Docker setup is straightforward. Self-hosted instances are fully supported and the code is open.',
-  },
-  {
-    q: 'How do API keys work for CI/CD?',
-    a: 'API keys use the format cmv1_<64-hex>. Only the SHA-256 hash is stored on the server. You create a read or write scoped key from the web UI, store it as a CI secret, and use it as a Bearer token: Authorization: Bearer cmv1_...',
-  },
-  {
-    q: 'Is there a rate limit on the API?',
-    a: 'Login is rate-limited to 10 attempts per minute per IP. Registration is limited to 5 per hour. All other endpoints are unthrottled for authenticated requests.',
-  },
-]
-
-function FAQ() {
-  const [open, setOpen] = useState<number | null>(null)
-
+function FAQ({ c }: { c: LandingCopy['faq'] }) {
   return (
-    <section id="faq" className={`${SECTION} bg-muted/30`}>
-      <div className={`${CONTAINER} space-y-10`}>
-        <SectionHeading title="Frequently asked questions" />
-        <div className="mx-auto max-w-2xl space-y-2">
-          {FAQS.map(({ q, a }, i) => {
-            const isOpen = open === i
-            return (
-              <div key={q} className="overflow-hidden rounded-lg border bg-background">
-                <h3>
-                  <button
-                    type="button"
-                    id={`faq-trigger-${i}`}
-                    aria-expanded={isOpen}
-                    aria-controls={`faq-panel-${i}`}
-                    className="flex min-h-12 w-full items-center justify-between gap-4 px-5 py-4 text-left text-sm font-medium transition-colors hover:bg-muted/50"
-                    onClick={() => setOpen(isOpen ? null : i)}
-                  >
-                    {q}
-                    {isOpen
-                      ? <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-                      : <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />}
-                  </button>
-                </h3>
-                {isOpen && (
-                  <div
-                    id={`faq-panel-${i}`}
-                    role="region"
-                    aria-labelledby={`faq-trigger-${i}`}
-                    className="border-t px-5 pb-4 pt-4 text-sm leading-relaxed text-muted-foreground"
-                  >
-                    {a}
-                  </div>
-                )}
-              </div>
-            )
-          })}
+    <section id="faq" className={SECTION}>
+      <div className={`${CONTAINER} grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20`}>
+        <h2 className="text-3xl font-extrabold tracking-[-0.03em] text-balance sm:text-4xl">{c.title}</h2>
+        <div className="divide-y rounded-2xl border bg-card">
+          {c.items.map(({ q, a }) => (
+            <details key={q} className="group px-6 [&_summary::-webkit-details-marker]:hidden">
+              <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-4 text-left font-semibold">
+                {q}
+                <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden="true" />
+              </summary>
+              <p className="pb-5 text-pretty text-[0.9375rem] leading-relaxed text-muted-foreground">{a}</p>
+            </details>
+          ))}
         </div>
       </div>
     </section>
   )
 }
 
-// ---------------------------------------------------------------------------
-// Waitlist / CTA
-// ---------------------------------------------------------------------------
+// ─── Closing CTA + waitlist ──────────────────────────────────────────
 
-function WaitlistCTA() {
+function ClosingCTA({ c }: { c: LandingCopy['cta'] }) {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -550,134 +515,119 @@ function WaitlistCTA() {
         body: JSON.stringify({ email }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data?.detail ?? 'Something went wrong')
+      if (!res.ok) throw new Error(data?.detail ?? c.errorFallback)
       setSubmitted(true)
-      toast.success(data.detail)
+      toast.success(c.joined)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to join waitlist')
+      toast.error(err instanceof Error ? err.message : c.errorFallback)
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <section className={SECTION}>
-      <div className={`${CONTAINER} text-center`}>
-        <div className="mx-auto max-w-2xl space-y-6">
-          <div className="inline-flex rounded-full bg-primary/10 p-3">
-            <Zap className="h-6 w-6 text-primary" aria-hidden="true" />
-          </div>
-          <h2 className="text-balance text-2xl font-bold tracking-tight sm:text-3xl">
-            Ready to secure your secrets?
-          </h2>
-          <p className="text-pretty text-base text-muted-foreground sm:text-lg">
-            Start free today — no credit card required. Or join the waitlist for early access to new features.
-          </p>
-          <div className="flex justify-center">
-            <Link href="/register" className="w-full sm:w-auto">
-              <Button size="lg" className="w-full gap-2 sm:w-auto">
-                Create free account <ArrowRight className="h-4 w-4" aria-hidden="true" />
+    <section className="px-5 pb-20 sm:px-6 sm:pb-24 lg:px-8">
+      <div className={cn(NILA_PANEL, 'relative mx-auto grid max-w-6xl items-center gap-10 overflow-hidden rounded-[1.75rem] px-6 py-14 sm:px-12 sm:py-16 lg:grid-cols-[1.1fr_1fr]')}>
+        <div className="relative max-w-xl">
+          <h2 className="text-3xl font-extrabold tracking-[-0.03em] text-balance sm:text-4xl">{c.title}</h2>
+          <p className="mt-4 text-pretty text-white/80">{c.lead}</p>
+          <Button size="lg" asChild className="mt-8 bg-[#EBC97E] text-[#1E2560] shadow-lg shadow-black/20 hover:bg-[#F1D597]">
+            <Link href="/register">{c.button}</Link>
+          </Button>
+        </div>
+
+        <div className="glass relative rounded-2xl p-6 sm:p-7" aria-live="polite">
+          <p className="font-semibold">{c.waitlistTitle}</p>
+          {submitted ? (
+            <p className="mt-3 flex items-center gap-2 text-sm text-[#F1D597]">
+              <Check className="size-4 shrink-0" aria-hidden="true" />
+              {c.joined}
+            </p>
+          ) : (
+            <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-2 sm:flex-row">
+              <label htmlFor="waitlist-email" className="sr-only">{c.emailLabel}</label>
+              <Input
+                id="waitlist-email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                spellCheck={false}
+                placeholder={c.placeholder}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
+                required
+                className="border-white/25 bg-white/10 text-white placeholder:text-white/55 focus-visible:border-[#EBC97E] focus-visible:ring-[#EBC97E]/30"
+              />
+              <Button
+                type="submit"
+                variant="outline"
+                disabled={loading || !email}
+                className="shrink-0 border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+              >
+                {loading && <Loader2 className="animate-spin" aria-hidden="true" />}
+                {loading ? c.joining : c.notify}
               </Button>
-            </Link>
-          </div>
-          <div className="relative">
-            <div aria-hidden="true" className="absolute inset-0 flex items-center">
-              <div className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center">
-              <span className="bg-background px-3 text-xs text-muted-foreground">
-                or join the waitlist for updates
-              </span>
-            </div>
-          </div>
-          <div aria-live="polite">
-            {submitted ? (
-              <p className="flex items-center justify-center gap-2 text-sm text-primary">
-                <Check className="h-4 w-4" aria-hidden="true" />
-                You&apos;re on the list! We&apos;ll be in touch.
-              </p>
-            ) : (
-              <form onSubmit={handleSubmit} className="mx-auto flex max-w-sm gap-2">
-                <label htmlFor="waitlist-email" className="sr-only">Email address</label>
-                <Input
-                  id="waitlist-email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={loading}
-                  required
-                />
-                <Button type="submit" variant="outline" disabled={loading || !email} className="shrink-0">
-                  {loading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                      <span className="sr-only">Joining the waitlist</span>
-                    </>
-                  ) : (
-                    'Join'
-                  )}
-                </Button>
-              </form>
-            )}
-          </div>
+            </form>
+          )}
         </div>
       </div>
     </section>
   )
 }
 
-// ---------------------------------------------------------------------------
-// Footer
-// ---------------------------------------------------------------------------
+// ─── Footer ──────────────────────────────────────────────────────────
 
-function Footer() {
+function Footer({ c }: { c: LandingCopy['footer'] }) {
   return (
     <footer className="border-t py-10">
-      <div
-        className={`${CONTAINER} flex flex-col items-center justify-between gap-4 text-sm text-muted-foreground sm:flex-row`}
-      >
-        <p className="flex items-center gap-2 text-center sm:text-left">
-          <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
-          <span>Pusaka — secure credentials for developers</span>
-        </p>
-        <nav aria-label="Footer" className="flex flex-wrap justify-center gap-x-5 gap-y-2">
-          <Link href="/register" className="rounded-sm transition-colors hover:text-foreground">Get started</Link>
-          <Link href="/login" className="rounded-sm transition-colors hover:text-foreground">Sign in</Link>
-          <a href="#pricing" className="rounded-sm transition-colors hover:text-foreground">Pricing</a>
-          <a href="#faq" className="rounded-sm transition-colors hover:text-foreground">FAQ</a>
+      <div className={`${CONTAINER} flex flex-col items-start justify-between gap-6 text-sm text-muted-foreground sm:flex-row sm:items-center`}>
+        <div className="flex items-center gap-3">
+          <LogoMark className="size-7" />
+          <span>{c.tagline}</span>
+        </div>
+        <nav aria-label="Footer" className="flex flex-wrap gap-x-6 gap-y-2">
+          <Link href="/register" className="rounded-sm transition-colors hover:text-foreground">{c.links.create}</Link>
+          <Link href="/login" className="rounded-sm transition-colors hover:text-foreground">{c.links.signIn}</Link>
+          <a href="#pricing" className="rounded-sm transition-colors hover:text-foreground">{c.links.pricing}</a>
+          <a href="#faq" className="rounded-sm transition-colors hover:text-foreground">{c.links.faq}</a>
         </nav>
       </div>
     </footer>
   )
 }
 
-// ---------------------------------------------------------------------------
-// Page
-// ---------------------------------------------------------------------------
-
 export function LandingPage() {
+  const { lang, setLang } = useT()
+  const c = LANDING_COPY[lang]
+
+  // `/?lang=id` or `/?lang=en` opens that version directly (shareable links).
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get('lang')
+    if (requested === 'id' || requested === 'en') setLang(requested)
+  }, [setLang])
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div lang={lang} className="min-h-screen bg-background text-foreground">
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-primary-foreground"
       >
-        Skip to content
+        {c.skip}
       </a>
-      <Nav />
+      <Nav c={c} />
       <main id="main">
-        <Hero />
-        <TrustBar />
-        <Features />
-        <HowItWorks />
-        <Pricing />
-        <FAQ />
-        <WaitlistCTA />
+        <Hero c={c.hero} vault={c.vault} />
+        <Keep c={c.keep} />
+        <Share c={c.share} />
+        <Developers c={c.developers} />
+        <HowItWorks c={c.how} />
+        <Security c={c.security} />
+        <Pricing c={c.pricing} />
+        <FAQ c={c.faq} />
+        <ClosingCTA c={c.cta} />
       </main>
-      <Footer />
+      <Footer c={c.footer} />
     </div>
   )
 }

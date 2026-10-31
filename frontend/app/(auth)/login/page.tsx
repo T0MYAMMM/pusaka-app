@@ -7,15 +7,17 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { Loader2, MailWarning } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Field, PasswordInput, fieldAria } from '@/components/shared/form'
+import { AuthError, AuthFooter, AuthHeader, AuthLink, AuthSubmit } from '@/components/features/auth-ui'
 import { authApi } from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
 
 const schema = z.object({
-  username: z.string().min(1, 'Username is required'),
-  password: z.string().min(1, 'Password is required'),
+  username: z.string().min(1, 'Enter your username.'),
+  password: z.string().min(1, 'Enter your password.'),
 })
 type FormValues = z.infer<typeof schema>
 
@@ -24,6 +26,7 @@ export default function LoginPage() {
   const setUser = useAuthStore((s) => s.setUser)
   const [unverified, setUnverified] = useState(false)
   const [resending, setResending] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -31,6 +34,7 @@ export default function LoginPage() {
 
   const onSubmit = async (data: FormValues) => {
     setUnverified(false)
+    setFormError(null)
     try {
       const user = await authApi.login(data)
       setUser(user)
@@ -39,7 +43,7 @@ export default function LoginPage() {
       if (err instanceof Error && err.message.includes('not verified')) {
         setUnverified(true)
       } else {
-        toast.error(err instanceof Error ? err.message : 'Login failed')
+        setFormError(err instanceof Error ? err.message : 'Sign-in failed. Try again in a moment.')
       }
     }
   }
@@ -48,67 +52,85 @@ export default function LoginPage() {
     setResending(true)
     try {
       await authApi.resendVerification()
-      toast.success('Verification email sent — check your inbox')
+      toast.success('Verification email sent. Check your inbox.')
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Could not resend email')
+      toast.error(err instanceof Error ? err.message : 'Could not resend the email. Try again in a moment.')
     } finally {
       setResending(false)
     }
   }
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 lg:hidden">
-          <span className="font-serif text-lg font-bold tracking-wide text-primary">Pusaka</span>
-        </div>
-        <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
-        <p className="text-sm text-muted-foreground">Enter your credentials to access your vault</p>
-      </div>
+    <div className="space-y-8">
+      <AuthHeader title="Welcome back" description="Sign in to open your vault." />
 
       {unverified && (
-        <div className="rounded-md border border-yellow-500/30 bg-yellow-500/10 p-3 text-sm text-yellow-600 dark:text-yellow-400">
-          <p className="font-medium">Email not verified</p>
-          <p className="mt-1">Check your inbox for the verification link.</p>
-          <button
-            onClick={handleResend}
-            disabled={resending}
-            className="mt-2 underline underline-offset-4 hover:opacity-80 disabled:opacity-50"
-          >
-            {resending ? 'Sending…' : 'Resend verification email'}
-          </button>
+        <div role="alert" className="flex gap-3 rounded-lg bg-warning-soft p-4 text-sm text-warning">
+          <MailWarning className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+          <div className="min-w-0 space-y-1">
+            <p className="font-semibold">Verify your email to sign in</p>
+            <p className="text-pretty">Open the link we emailed you, then sign in again. Can’t find it? Check spam, or send a new one.</p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleResend}
+              disabled={resending}
+              className="mt-2 border-warning/40 bg-transparent text-warning hover:bg-warning/10 hover:text-warning dark:bg-transparent"
+            >
+              {resending && <Loader2 className="animate-spin" aria-hidden="true" />}
+              {resending ? 'Sending…' : 'Resend verification email'}
+            </Button>
+          </div>
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="username">Username</Label>
-          <Input id="username" autoComplete="username" {...register('username')} />
-          {errors.username && <p className="text-sm text-destructive">{errors.username.message}</p>}
-        </div>
+      {formError && (
+        <AuthError>
+          <p className="font-semibold">{formError}</p>
+          <p>Usernames and passwords are case-sensitive. Check for typos, or <AuthLink href="/forgot-password">reset your password</AuthLink>.</p>
+        </AuthError>
+      )}
 
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="password">Password</Label>
-            <Link href="/forgot-password" className="inline-flex min-h-6 items-center rounded-sm text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground">
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
+        <Field id="username" label="Username" error={errors.username?.message}>
+          <Input
+            {...fieldAria('username', errors.username?.message)}
+            autoComplete="username"
+            autoCapitalize="none"
+            spellCheck={false}
+            {...register('username')}
+          />
+        </Field>
+
+        <Field
+          id="password"
+          label="Password"
+          error={errors.password?.message}
+          labelAction={
+            <Link
+              href="/forgot-password"
+              className="inline-flex min-h-6 items-center rounded-sm text-xs font-medium text-primary underline-offset-4 hover:underline"
+            >
               Forgot password?
             </Link>
-          </div>
-          <Input id="password" type="password" autoComplete="current-password" {...register('password')} />
-          {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
-        </div>
+          }
+        >
+          <PasswordInput
+            {...fieldAria('password', errors.password?.message)}
+            autoComplete="current-password"
+            {...register('password')}
+          />
+        </Field>
 
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? 'Signing in…' : 'Sign in'}
-        </Button>
+        <div className="pt-1">
+          <AuthSubmit pending={isSubmitting} pendingLabel="Signing in…">Sign in</AuthSubmit>
+        </div>
       </form>
 
-      <p className="text-center text-sm text-muted-foreground">
-        No account?{' '}
-        <Link href="/register" className="font-medium underline underline-offset-4 hover:text-foreground">
-          Create one
-        </Link>
-      </p>
+      <AuthFooter>
+        New to Pusaka? <AuthLink href="/register">Create an account</AuthLink>
+      </AuthFooter>
     </div>
   )
 }

@@ -3,68 +3,84 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import {
-  LayoutDashboard, KeyRound, FileText, Activity,
-  LogOut, Vault, Building2, Settings, FolderArchive,
-  PanelLeftClose, PanelLeftOpen,
-} from 'lucide-react'
+import { LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { LogoMark } from '@/components/brand/logo'
 import { authApi } from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
-import { useSidebar } from './sidebar-context'
 import { useT } from '@/lib/i18n'
+import { useSidebar } from './sidebar-context'
+import { getNav, type NavLink } from './nav-config'
 
 interface SidebarProps {
   onNavigate?: () => void
+  /** Force the expanded layout (mobile sheet). */
+  forceExpanded?: boolean
 }
 
-function NavItem({
-  href, label, icon: Icon, exact, collapsed, onClick,
-}: {
-  href: string; label: string; icon: React.ElementType; exact?: boolean; collapsed: boolean; onClick?: () => void
-}) {
+function NavItem({ link, collapsed, onClick }: { link: NavLink; collapsed: boolean; onClick?: () => void }) {
   const pathname = usePathname()
-  const isActive = exact ? pathname === href : pathname.startsWith(href)
+  const { href, label, icon: Icon, exact } = link
+  const isActive = exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`)
 
-  const linkClass = cn(
-    'flex min-h-10 items-center rounded-md py-2 text-sm font-medium transition-colors',
-    'outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar',
-    collapsed ? 'justify-center px-2' : 'gap-3 px-3',
-    isActive
-      ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-      : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
-  )
-
-  if (collapsed) {
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Link href={href} onClick={onClick} className={linkClass}>
-            <Icon className="h-4 w-4 shrink-0" />
-          </Link>
-        </TooltipTrigger>
-        <TooltipContent side="right" className="font-medium">{label}</TooltipContent>
-      </Tooltip>
-    )
-  }
-
-  return (
-    <Link href={href} onClick={onClick} className={linkClass}>
-      <Icon className="h-4 w-4 shrink-0" />
-      {label}
+  const item = (
+    <Link
+      href={href}
+      onClick={onClick}
+      aria-current={isActive ? 'page' : undefined}
+      className={cn(
+        'group relative flex h-10 items-center rounded-lg text-sm font-medium transition-colors',
+        'outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring',
+        collapsed ? 'justify-center' : 'gap-3 px-3',
+        isActive
+          ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+          : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground',
+      )}
+    >
+      {/* Brass rail marks the current page. */}
+      <span
+        aria-hidden="true"
+        className={cn(
+          'absolute top-2 bottom-2 left-0 w-[3px] rounded-r-full bg-sidebar-primary transition-opacity',
+          isActive ? 'opacity-100' : 'opacity-0',
+        )}
+      />
+      <Icon className={cn('size-[1.125rem] shrink-0', isActive && 'text-sidebar-primary')} aria-hidden="true" />
+      {collapsed ? <span className="sr-only">{label}</span> : <span className="truncate">{label}</span>}
     </Link>
   )
+
+  if (!collapsed) return item
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{item}</TooltipTrigger>
+      <TooltipContent side="right" className="font-medium">{label}</TooltipContent>
+    </Tooltip>
+  )
 }
 
-export function Sidebar({ onNavigate }: SidebarProps = {}) {
+function NavGroup({ label, collapsed, children }: { label: string; collapsed: boolean; children: React.ReactNode }) {
+  return (
+    <div className="space-y-0.5">
+      {collapsed ? (
+        <div className="mx-3 mb-2 border-t border-sidebar-border" aria-hidden="true" />
+      ) : (
+        <p className="mb-1.5 px-3 text-xs font-medium text-sidebar-foreground/45">{label}</p>
+      )}
+      {children}
+    </div>
+  )
+}
+
+export function Sidebar({ onNavigate, forceExpanded = false }: SidebarProps = {}) {
   const router = useRouter()
   const { user, setUser } = useAuthStore()
-  const { collapsed, toggle } = useSidebar()
+  const sidebar = useSidebar()
+  const collapsed = forceExpanded ? false : sidebar.collapsed
   const { t } = useT()
+  const nav = getNav(t)
 
   const handleLogout = async () => {
     try {
@@ -72,7 +88,7 @@ export function Sidebar({ onNavigate }: SidebarProps = {}) {
       setUser(null)
       router.push('/login')
     } catch {
-      toast.error('Logout failed')
+      toast.error('Sign-out failed. Check your connection and try again.')
     }
   }
 
@@ -80,136 +96,89 @@ export function Sidebar({ onNavigate }: SidebarProps = {}) {
     ? `${user.first_name[0] ?? ''}${user.last_name[0] ?? ''}`.toUpperCase()
     : '?'
 
-  const NAV = [
-    { href: '/dashboard', label: t.nav.dashboard, icon: LayoutDashboard, exact: true },
-    { href: '/credentials', label: t.nav.credentials, icon: KeyRound },
-    { href: '/notes', label: t.nav.notes, icon: FileText },
-    { href: '/documents', label: t.nav.documents, icon: FolderArchive },
-    { href: '/activity', label: t.nav.activity, icon: Activity },
-  ]
-
-  const TEAM_NAV = [
-    { href: '/vaults', label: t.nav.vaults, icon: Vault },
-    { href: '/settings/organization', label: t.nav.organizations, icon: Building2 },
-  ]
-
   return (
     <aside
+      aria-label="Main"
       className={cn(
-        'flex h-full flex-col border-r bg-sidebar transition-all duration-200 ease-in-out',
-        collapsed ? 'w-16' : 'w-60'
+        'kawung kawung-fade-b relative flex h-full flex-col overflow-hidden bg-sidebar text-sidebar-foreground transition-[width] duration-200 ease-out [--kawung-color:rgba(217,174,85,0.09)] [--kawung-size:44px]',
+        collapsed ? 'w-[4.5rem]' : 'w-64',
       )}
     >
-      {/* Brand + toggle */}
-      <div className={cn('flex items-center py-4', collapsed ? 'justify-center px-2' : 'justify-between px-4')}>
-        {!collapsed && (
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="font-serif font-bold text-xl tracking-wide text-sidebar-primary leading-none">
-              Pusaka
-            </span>
-          </div>
+      {/* Brand + collapse */}
+      <div className={cn('flex h-16 shrink-0 items-center', collapsed ? 'justify-center px-2' : 'justify-between pl-5 pr-3')}>
+        <Link
+          href="/dashboard"
+          onClick={onNavigate}
+          className={cn('flex items-center gap-2.5 rounded-lg', collapsed && 'hidden')}
+          translate="no"
+        >
+          <LogoMark className="size-8" />
+          <span className="text-[1.0625rem] font-extrabold tracking-[-0.02em] text-white">Pusaka</span>
+        </Link>
+        {!forceExpanded && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={sidebar.toggle}
+                aria-label={collapsed ? t.shell.expand : t.shell.collapse}
+                className="inline-flex size-8 items-center justify-center rounded-md text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+              >
+                {collapsed ? <PanelLeftOpen className="size-4" aria-hidden="true" /> : <PanelLeftClose className="size-4" aria-hidden="true" />}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">{collapsed ? t.shell.expand : t.shell.collapse}</TooltipContent>
+          </Tooltip>
         )}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 shrink-0 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60"
-              onClick={toggle}
-            >
-              {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="right">
-            {collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          </TooltipContent>
-        </Tooltip>
       </div>
 
-      <Separator className="opacity-20" />
-
       {/* Nav */}
-      <nav className="flex flex-1 flex-col gap-0.5 p-2">
-        {NAV.map(({ href, label, icon, exact }) => (
-          <NavItem key={href} href={href} label={label} icon={icon} exact={exact} collapsed={collapsed} onClick={onNavigate} />
-        ))}
-
-        {!collapsed && (
-          <p className="mt-4 mb-1 px-3 text-[11px] font-semibold uppercase tracking-widest text-sidebar-foreground/70">
-            Team
-          </p>
-        )}
-        {collapsed && <div className="mt-3 mb-1 mx-2 border-t border-sidebar-border" />}
-
-        {TEAM_NAV.map(({ href, label, icon }) => (
-          <NavItem key={href} href={href} label={label} icon={icon} collapsed={collapsed} onClick={onNavigate} />
-        ))}
-
-        <div className="flex-1" />
-
-        <NavItem href="/settings/general" label={t.nav.settings} icon={Settings} collapsed={collapsed} onClick={onNavigate} />
+      <nav className="flex flex-1 flex-col gap-6 overflow-y-auto px-3 pt-2 pb-3">
+        <NavGroup label={t.nav.groupVault} collapsed={collapsed}>
+          {nav.vault.map((link) => <NavItem key={link.href} link={link} collapsed={collapsed} onClick={onNavigate} />)}
+        </NavGroup>
+        <NavGroup label={t.nav.groupShared} collapsed={collapsed}>
+          {nav.shared.map((link) => <NavItem key={link.href} link={link} collapsed={collapsed} onClick={onNavigate} />)}
+        </NavGroup>
+        <div className="mt-auto">
+          <NavItem link={{ ...nav.settings, href: '/settings/general' }} collapsed={collapsed} onClick={onNavigate} />
+        </div>
       </nav>
 
-      <Separator className="opacity-20" />
-
-      {/* User row */}
-      <div className={cn('flex items-center gap-2 p-3', collapsed ? 'flex-col' : 'flex-row')}>
-        {collapsed ? (
-          <>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link href="/settings/general" onClick={onNavigate}>
-                  <Avatar className="h-8 w-8 shrink-0 cursor-pointer ring-2 ring-sidebar-primary/30 hover:ring-sidebar-primary/70 transition-all">
-                    <AvatarFallback className="text-xs bg-sidebar-accent text-sidebar-foreground">{initials}</AvatarFallback>
-                  </Avatar>
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                {user?.first_name} {user?.last_name}
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60"
-                  onClick={handleLogout}
-                >
-                  <LogOut className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">Sign out</TooltipContent>
-            </Tooltip>
-          </>
-        ) : (
-          <>
-            <Link
-              href="/settings/general"
-              onClick={onNavigate}
-              className="flex min-w-0 flex-1 items-center gap-3 rounded-md px-2 py-1.5 transition-colors hover:bg-sidebar-accent/60"
-            >
-              <Avatar className="h-8 w-8 shrink-0 ring-2 ring-sidebar-primary/30">
-                <AvatarFallback className="text-xs bg-sidebar-accent text-sidebar-foreground">{initials}</AvatarFallback>
-              </Avatar>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-sidebar-foreground">
-                  {user?.first_name} {user?.last_name}
-                </p>
-                <p className="truncate text-xs text-sidebar-foreground/70">@{user?.username}</p>
-              </div>
-            </Link>
-            <Button
-              variant="ghost"
-              size="icon"
+      {/* Account */}
+      <div className={cn('flex shrink-0 items-center gap-2 border-t border-sidebar-border p-3', collapsed && 'flex-col')}>
+        <Link
+          href="/settings/general"
+          onClick={onNavigate}
+          aria-label={collapsed ? `${user?.first_name ?? ''} ${user?.last_name ?? ''}`.trim() || 'Account' : undefined}
+          className={cn(
+            'flex min-w-0 items-center gap-3 rounded-lg transition-colors hover:bg-sidebar-accent/60',
+            collapsed ? 'p-1' : 'flex-1 px-2 py-1.5',
+          )}
+        >
+          <Avatar className="size-8 shrink-0 ring-2 ring-sidebar-primary/50">
+            <AvatarFallback className="bg-sidebar-accent text-xs font-bold text-sidebar-primary">{initials}</AvatarFallback>
+          </Avatar>
+          {!collapsed && (
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-semibold text-white">{user?.first_name} {user?.last_name}</span>
+              <span className="block truncate text-xs text-sidebar-foreground/55">@{user?.username}</span>
+            </span>
+          )}
+        </Link>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
               onClick={handleLogout}
-              title="Sign out"
-              className="shrink-0 h-9 w-9 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60"
+              aria-label={t.common.signOut}
+              className="inline-flex size-9 shrink-0 items-center justify-center rounded-md text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
             >
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </>
-        )}
+              <LogOut className="size-4" aria-hidden="true" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right">{t.common.signOut}</TooltipContent>
+        </Tooltip>
       </div>
     </aside>
   )

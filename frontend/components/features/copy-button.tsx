@@ -2,22 +2,32 @@
 
 import { useState } from 'react'
 import { Copy, Check } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 interface Props {
   value: string
   label?: string
   clearAfter?: number // ms, default 30000
+  className?: string
+  size?: 'icon' | 'icon-sm'
 }
 
-export function CopyButton({ value, label = 'Value', clearAfter = 30_000 }: Props) {
+export function CopyButton({ value, label = 'Value', clearAfter = 30_000, className, size = 'icon-sm' }: Props) {
   const [copied, setCopied] = useState(false)
 
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(value)
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    try {
+      await navigator.clipboard.writeText(value)
+    } catch {
+      toast.error('Copying is blocked by your browser. Select the text and copy it manually.')
+      return
+    }
     setCopied(true)
-    toast.success(`${label} copied — clipboard clears in ${clearAfter / 1000}s`)
+    toast.success(`${label} copied`, { description: `Clipboard clears in ${clearAfter / 1000}s.` })
 
     // Auto-clear clipboard after timeout
     setTimeout(async () => {
@@ -31,8 +41,15 @@ export function CopyButton({ value, label = 'Value', clearAfter = 30_000 }: Prop
   }
 
   return (
-    <Button variant="ghost" size="icon" onClick={handleCopy} title={`Copy ${label}`}>
-      {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+    <Button
+      variant="ghost"
+      size={size}
+      onClick={handleCopy}
+      aria-label={`Copy ${label.toLowerCase()}`}
+      title={`Copy ${label.toLowerCase()}`}
+      className={cn('text-muted-foreground hover:text-foreground', className)}
+    >
+      {copied ? <Check className="text-success" aria-hidden="true" /> : <Copy aria-hidden="true" />}
     </Button>
   )
 }

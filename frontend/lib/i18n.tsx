@@ -1,22 +1,37 @@
 'use client'
 
-import { createContext, useContext, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, type ReactNode } from 'react'
+import { useLocalPreference } from '@/lib/local-store'
 
 export type Lang = 'en' | 'id'
 
 const translations = {
   en: {
     nav: {
+      groupVault: 'Vault',
+      groupShared: 'Shared',
+      search: 'Search',
+      newCredential: 'New credential',
+      newNote: 'New secure note',
+      newDocument: 'Upload document',
       dashboard: 'Dashboard',
       credentials: 'Credentials',
-      notes: 'Secure Notes',
+      notes: 'Secure notes',
       documents: 'Documents',
-      activity: 'Activity Log',
-      vaults: 'Shared Vaults',
+      activity: 'Activity log',
+      vaults: 'Shared vaults',
       organizations: 'Organizations',
       settings: 'Settings',
     },
     common: {
+      page: 'Page',
+      new: 'New',
+      copy: 'Copy',
+      show: 'Show',
+      hide: 'Hide',
+      back: 'Back',
+      all: 'All',
+      signOut: 'Sign out',
       add: 'Add',
       save: 'Save changes',
       cancel: 'Cancel',
@@ -31,18 +46,30 @@ const translations = {
       favorites: 'Favorites',
     },
     dashboard: {
+      greetingMorning: 'Good morning',
+      greetingAfternoon: 'Good afternoon',
+      greetingEvening: 'Good evening',
+      health: 'Vault health',
+      healthGood: 'Nothing needs your attention. Everything is well kept.',
+      healthNeedsAttention: 'A few items need your attention.',
+      expiringSoon: 'Expired or expiring soon',
+      reusedPasswords: 'Reused passwords',
+      reusedHint: 'used in more than one place',
+      review: 'Review',
+      favorites: 'Favorites',
+      itemsKept: 'items kept safe',
       title: 'Dashboard',
-      subtitle: 'Your secure vault at a glance',
-      totalCredentials: 'Total Credentials',
-      secureNotes: 'Secure Notes',
+      subtitle: 'Everything you keep, in one place.',
+      totalCredentials: 'Total credentials',
+      secureNotes: 'Secure notes',
       totalDocuments: 'Documents',
-      recentCredentials: 'Recent Credentials',
-      recentNotes: 'Recent Notes',
-      recentActivity: 'Recent Activity',
+      recentCredentials: 'Recent credentials',
+      recentNotes: 'Recent notes',
+      recentActivity: 'Recent activity',
       noCredentials: 'No credentials yet.',
       noNotes: 'No notes yet.',
       noActivity: 'No activity yet.',
-      credentialsByType: 'Credentials by Type',
+      credentialsByType: 'Credentials by category',
     },
     credentials: {
       title: 'Credentials',
@@ -53,7 +80,7 @@ const translations = {
       allEnvs: 'All envs',
     },
     notes: {
-      title: 'Secure Notes',
+      title: 'Secure notes',
       searchPlaceholder: 'Search notes…',
       addFirst: 'Add your first note',
       noFound: 'No notes found.',
@@ -63,7 +90,7 @@ const translations = {
       searchPlaceholder: 'Search documents…',
       addFirst: 'Upload your first document',
       noFound: 'No documents found.',
-      upload: 'Upload Document',
+      upload: 'Upload document',
       allTypes: 'All types',
       download: 'Download',
       uploadFile: 'Upload file',
@@ -99,25 +126,61 @@ const translations = {
       exportDesc: 'Download all credentials as CSV (passwords excluded).',
       recentActivity: 'Recent activity',
     },
+    shell: {
+      searchTrigger: 'Search your vault…',
+      commandPlaceholder: 'Search items or jump to a page…',
+      goTo: 'Go to',
+      create: 'Create',
+      items: 'Items',
+      preferences: 'Preferences',
+      noResults: 'No matches. Try another word.',
+      typeToSearch: 'Type two or more characters to search credentials and notes.',
+      theme: 'Theme',
+      light: 'Light',
+      dark: 'Dark',
+      system: 'System',
+      language: 'Language',
+      collapse: 'Collapse sidebar',
+      expand: 'Expand sidebar',
+      openMenu: 'Open menu',
+      unverified: "Your email address isn't verified yet.",
+      resend: 'Resend verification email',
+      sending: 'Sending…',
+      dismiss: 'Dismiss',
+    },
     brand: {
       name: 'Pusaka',
-      tagline: 'Store with Peace. Guard with Pride.',
+      tagline: 'Store with peace. Guard with pride.',
       brankas: 'Pusaka Brankas',
       waris: 'Pusaka Waris',
     },
   },
   id: {
     nav: {
+      groupVault: 'Brankas',
+      groupShared: 'Bersama',
+      search: 'Cari',
+      newCredential: 'Sandi baru',
+      newNote: 'Catatan aman baru',
+      newDocument: 'Unggah dokumen',
       dashboard: 'Dasbor',
-      credentials: 'Brankas Sandi',
-      notes: 'Catatan Aman',
+      credentials: 'Brankas sandi',
+      notes: 'Catatan aman',
       documents: 'Dokumen',
-      activity: 'Riwayat Aktivitas',
-      vaults: 'Vault Bersama',
+      activity: 'Riwayat aktivitas',
+      vaults: 'Vault bersama',
       organizations: 'Organisasi',
       settings: 'Pengaturan',
     },
     common: {
+      page: 'Halaman',
+      new: 'Baru',
+      copy: 'Salin',
+      show: 'Tampilkan',
+      hide: 'Sembunyikan',
+      back: 'Kembali',
+      all: 'Semua',
+      signOut: 'Keluar',
       add: 'Tambah',
       save: 'Simpan perubahan',
       cancel: 'Batal',
@@ -132,21 +195,33 @@ const translations = {
       favorites: 'Favorit',
     },
     dashboard: {
+      greetingMorning: 'Selamat pagi',
+      greetingAfternoon: 'Selamat siang',
+      greetingEvening: 'Selamat malam',
+      health: 'Kesehatan brankas',
+      healthGood: 'Tidak ada yang perlu ditindaklanjuti. Semua tersimpan dengan baik.',
+      healthNeedsAttention: 'Beberapa item perlu perhatian Anda.',
+      expiringSoon: 'Kedaluwarsa atau segera berakhir',
+      reusedPasswords: 'Sandi dipakai ulang',
+      reusedHint: 'dipakai di lebih dari satu tempat',
+      review: 'Tinjau',
+      favorites: 'Favorit',
+      itemsKept: 'item tersimpan aman',
       title: 'Dasbor',
-      subtitle: 'Brankas digital Anda dalam satu tampilan',
-      totalCredentials: 'Total Sandi',
-      secureNotes: 'Catatan Aman',
+      subtitle: 'Semua yang Anda simpan, dalam satu tempat.',
+      totalCredentials: 'Total sandi',
+      secureNotes: 'Catatan aman',
       totalDocuments: 'Dokumen',
-      recentCredentials: 'Sandi Terbaru',
-      recentNotes: 'Catatan Terbaru',
-      recentActivity: 'Aktivitas Terbaru',
+      recentCredentials: 'Sandi terbaru',
+      recentNotes: 'Catatan terbaru',
+      recentActivity: 'Aktivitas terbaru',
       noCredentials: 'Belum ada sandi tersimpan.',
       noNotes: 'Belum ada catatan.',
       noActivity: 'Belum ada aktivitas.',
-      credentialsByType: 'Sandi Berdasarkan Jenis',
+      credentialsByType: 'Sandi berdasarkan jenis',
     },
     credentials: {
-      title: 'Brankas Sandi',
+      title: 'Brankas sandi',
       searchPlaceholder: 'Cari sandi…',
       addFirst: 'Simpan sandi pertama Anda',
       noFound: 'Sandi tidak ditemukan.',
@@ -154,17 +229,17 @@ const translations = {
       allEnvs: 'Semua env',
     },
     notes: {
-      title: 'Catatan Aman',
+      title: 'Catatan aman',
       searchPlaceholder: 'Cari catatan…',
       addFirst: 'Buat catatan pertama Anda',
       noFound: 'Catatan tidak ditemukan.',
     },
     documents: {
-      title: 'Dokumen Penting',
+      title: 'Dokumen penting',
       searchPlaceholder: 'Cari dokumen…',
       addFirst: 'Unggah dokumen pertama Anda',
       noFound: 'Dokumen tidak ditemukan.',
-      upload: 'Unggah Dokumen',
+      upload: 'Unggah dokumen',
       allTypes: 'Semua jenis',
       download: 'Unduh',
       uploadFile: 'Unggah berkas',
@@ -200,9 +275,31 @@ const translations = {
       exportDesc: 'Unduh semua sandi dalam format CSV (kata sandi tidak disertakan).',
       recentActivity: 'Aktivitas terkini',
     },
+    shell: {
+      searchTrigger: 'Cari di brankas…',
+      commandPlaceholder: 'Cari item atau buka halaman…',
+      goTo: 'Buka',
+      create: 'Buat',
+      items: 'Item',
+      preferences: 'Preferensi',
+      noResults: 'Tidak ada yang cocok. Coba kata lain.',
+      typeToSearch: 'Ketik minimal dua huruf untuk mencari sandi dan catatan.',
+      theme: 'Tema',
+      light: 'Terang',
+      dark: 'Gelap',
+      system: 'Sistem',
+      language: 'Bahasa',
+      collapse: 'Ciutkan sidebar',
+      expand: 'Bentangkan sidebar',
+      openMenu: 'Buka menu',
+      unverified: 'Alamat email Anda belum terverifikasi.',
+      resend: 'Kirim ulang email verifikasi',
+      sending: 'Mengirim…',
+      dismiss: 'Tutup',
+    },
     brand: {
       name: 'Pusaka',
-      tagline: 'Simpan dengan Tenang. Jaga dengan Bangga.',
+      tagline: 'Simpan dengan tenang. Jaga dengan bangga.',
       brankas: 'Pusaka Brankas',
       waris: 'Pusaka Waris',
     },
@@ -233,16 +330,19 @@ const I18nContext = createContext<I18nContextValue>({
   t: translations.en,
 })
 
-export function I18nProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>(() => {
-    if (typeof window === 'undefined') return 'en'
-    return (localStorage.getItem('pusaka-lang') as Lang) ?? 'en'
-  })
+const isLang = (v: string): v is Lang => v === 'en' || v === 'id'
 
-  const setLang = (l: Lang) => {
-    setLangState(l)
-    localStorage.setItem('pusaka-lang', l)
-  }
+/** First visit: follow the browser's language list (Accept-Language), not location. */
+const detectLang = (): Lang | null =>
+  navigator.languages?.some((l) => l.toLowerCase().startsWith('id')) ? 'id' : null
+
+export function I18nProvider({ children }: { children: ReactNode }) {
+  const [lang, setLang] = useLocalPreference<Lang>('pusaka-lang', 'en', isLang, detectLang)
+
+  // Keep <html lang> in sync for screen readers and hyphenation.
+  useEffect(() => {
+    document.documentElement.lang = lang
+  }, [lang])
 
   return (
     <I18nContext.Provider value={{ lang, setLang, t: translations[lang] }}>

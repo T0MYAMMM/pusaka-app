@@ -1,22 +1,21 @@
 'use client'
 
-import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Suspense } from 'react'
-import { useForm } from 'react-hook-form'
+import { Suspense, useState } from 'react'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Link2Off } from 'lucide-react'
+import { Field, PasswordInput, StrengthMeter, fieldAria } from '@/components/shared/form'
+import { AuthError, AuthFooter, AuthHeader, AuthLink, AuthLoading, AuthResult, AuthSubmit } from '@/components/features/auth-ui'
 import { authApi } from '@/lib/api'
 
 const schema = z.object({
-  new_password: z.string().min(8, 'Password must be at least 8 characters'),
+  new_password: z.string().min(8, 'Use at least 8 characters.'),
   confirm_password: z.string(),
 }).refine((d) => d.new_password === d.confirm_password, {
-  message: "Passwords don't match",
+  message: 'Passwords don’t match. Retype the new password.',
   path: ['confirm_password'],
 })
 type FormValues = z.infer<typeof schema>
@@ -25,64 +24,83 @@ function ResetPasswordForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get('token') ?? ''
+  const [formError, setFormError] = useState<string | null>(null)
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormValues>({
+  const { register, handleSubmit, control, formState: { errors, isSubmitting } } = useForm<FormValues>({
     resolver: zodResolver(schema),
   })
+  const password = useWatch({ control, name: 'new_password' }) ?? ''
 
   const onSubmit = async (data: FormValues) => {
+    setFormError(null)
     try {
       await authApi.resetPassword({ token, new_password: data.new_password })
-      toast.success('Password reset successfully')
+      toast.success('Password updated. Sign in with your new password.')
       router.push('/login')
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Reset failed. The link may have expired.')
+      setFormError(err instanceof Error ? err.message : 'Reset failed. The link may have expired.')
     }
   }
 
   if (!token) {
     return (
-      <div className="space-y-4 text-center">
-        <h1 className="text-2xl font-bold tracking-tight">Invalid link</h1>
-        <p className="text-sm text-muted-foreground">This reset link is missing or invalid.</p>
-        <Link href="/forgot-password" className="text-sm font-medium underline underline-offset-4 hover:text-foreground">
-          Request a new link
-        </Link>
-      </div>
+      <AuthResult
+        tone="error"
+        icon={Link2Off}
+        title="This reset link doesn’t work"
+        action={{ href: '/forgot-password', label: 'Request a new link' }}
+      >
+        <p>The link is missing its token, or it was only partly copied. Request a new one and open it straight from the email.</p>
+      </AuthResult>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight">Reset your password</h1>
-        <p className="text-sm text-muted-foreground">Choose a new password for your account.</p>
-      </div>
+    <div className="space-y-8">
+      <AuthHeader title="Choose a new password" description="You’ll use it to sign in and to unlock your vault." />
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="new_password">New password</Label>
-          <Input id="new_password" type="password" autoComplete="new-password" {...register('new_password')} />
-          {errors.new_password && <p className="text-sm text-destructive">{errors.new_password.message}</p>}
+      {formError && (
+        <AuthError>
+          <p>{formError}</p>
+          <p>
+            Links expire after a while. <AuthLink href="/forgot-password">Request a new link</AuthLink>
+          </p>
+        </AuthError>
+      )}
+
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
+        <Field id="new_password" label="New password" error={errors.new_password?.message} hint="At least 8 characters.">
+          <PasswordInput
+            {...fieldAria('new_password', errors.new_password?.message, true)}
+            autoComplete="new-password"
+            {...register('new_password')}
+          />
+          <StrengthMeter password={password} />
+        </Field>
+
+        <Field id="confirm_password" label="Confirm new password" error={errors.confirm_password?.message}>
+          <PasswordInput
+            {...fieldAria('confirm_password', errors.confirm_password?.message)}
+            autoComplete="new-password"
+            {...register('confirm_password')}
+          />
+        </Field>
+
+        <div className="pt-1">
+          <AuthSubmit pending={isSubmitting} pendingLabel="Saving…">Set new password</AuthSubmit>
         </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="confirm_password">Confirm password</Label>
-          <Input id="confirm_password" type="password" autoComplete="new-password" {...register('confirm_password')} />
-          {errors.confirm_password && <p className="text-sm text-destructive">{errors.confirm_password.message}</p>}
-        </div>
-
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? 'Resetting…' : 'Reset password'}
-        </Button>
       </form>
+
+      <AuthFooter>
+        Remembered it? <AuthLink href="/login">Sign in</AuthLink>
+      </AuthFooter>
     </div>
   )
 }
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={<div className="text-sm text-muted-foreground">Loading…</div>}>
+    <Suspense fallback={<AuthLoading>Loading…</AuthLoading>}>
       <ResetPasswordForm />
     </Suspense>
   )

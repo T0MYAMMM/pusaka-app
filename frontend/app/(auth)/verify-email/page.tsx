@@ -1,8 +1,9 @@
 'use client'
 
-import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useState } from 'react'
+import { MailCheck, MailX } from 'lucide-react'
+import { AuthLoading, AuthResult } from '@/components/features/auth-ui'
 import { authApi } from '@/lib/api'
 
 type Status = 'loading' | 'success' | 'error'
@@ -10,52 +11,52 @@ type Status = 'loading' | 'success' | 'error'
 function VerifyEmailContent() {
   const searchParams = useSearchParams()
   const token = searchParams.get('token') ?? ''
-  const [status, setStatus] = useState<Status>('loading')
-  const [message, setMessage] = useState('')
+  const [result, setResult] = useState<{ status: Status; message: string } | null>(null)
 
   useEffect(() => {
-    if (!token) {
-      setStatus('error')
-      setMessage('No verification token found in the link.')
-      return
-    }
+    if (!token) return
     authApi.verifyEmail(token)
-      .then((res) => {
-        setMessage(res.detail)
-        setStatus('success')
-      })
-      .catch((err) => {
-        setMessage(err instanceof Error ? err.message : 'Verification failed.')
-        setStatus('error')
-      })
+      .then((res) => setResult({ status: 'success', message: res.detail }))
+      .catch((err) => setResult({ status: 'error', message: err instanceof Error ? err.message : 'Verification failed.' }))
   }, [token])
 
+  // A link without a token fails immediately; otherwise wait for the API.
+  const status: Status = !token ? 'error' : result?.status ?? 'loading'
+  const message = !token ? 'No verification token found in the link.' : result?.message ?? ''
+
   if (status === 'loading') {
-    return <p className="text-sm text-muted-foreground">Verifying your email…</p>
+    return <AuthLoading>Verifying your email…</AuthLoading>
+  }
+
+  if (status === 'success') {
+    return (
+      <AuthResult
+        tone="success"
+        icon={MailCheck}
+        title="Email verified"
+        action={{ href: '/dashboard', label: 'Go to your vault' }}
+      >
+        <p>{message}</p>
+      </AuthResult>
+    )
   }
 
   return (
-    <div className="space-y-4 text-center">
-      <h1 className="text-2xl font-bold tracking-tight">
-        {status === 'success' ? 'Email verified' : 'Verification failed'}
-      </h1>
-      <p className="text-sm text-muted-foreground">{message}</p>
-      {status === 'success' ? (
-        <Link href="/dashboard" className="text-sm font-medium underline underline-offset-4 hover:text-foreground">
-          Go to your vault
-        </Link>
-      ) : (
-        <Link href="/login" className="text-sm font-medium underline underline-offset-4 hover:text-foreground">
-          Back to login
-        </Link>
-      )}
-    </div>
+    <AuthResult
+      tone="error"
+      icon={MailX}
+      title="We couldn’t verify your email"
+      action={{ href: '/login', label: 'Back to sign in' }}
+    >
+      <p>{message}</p>
+      <p className="mt-2">Open the newest link we sent, or sign in to get a fresh one.</p>
+    </AuthResult>
   )
 }
 
 export default function VerifyEmailPage() {
   return (
-    <Suspense fallback={<p className="text-sm text-muted-foreground">Verifying…</p>}>
+    <Suspense fallback={<AuthLoading>Verifying…</AuthLoading>}>
       <VerifyEmailContent />
     </Suspense>
   )

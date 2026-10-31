@@ -24,7 +24,7 @@ The backend and frontend are fully decoupled. The backend exposes a REST API; th
 | Encryption | Fernet/AES-128 (cryptography) |
 | Password hashing | bcrypt 4.x (direct, no passlib) |
 | Frontend framework | Next.js 16.1 + React 19 |
-| Styling | Tailwind CSS v4 + shadcn/ui |
+| Styling | Tailwind CSS v4 + shadcn/ui, "Nila & Kuningan" design system (see `.claude/STYLE_GUIDE.md`) |
 | Server state | TanStack Query v5 |
 | Client state | Zustand v5 (with persist) |
 | Forms | react-hook-form + zod |
